@@ -5,10 +5,10 @@ import React from "react";
 /**
  * CaringHandsEmblem Component
  *
- * Real photo-realistic human hand cutouts (100% transparent, zero background artifacts):
- * - Top-Left Hand: Positioned top-left inside the visible viewport at 100% zoom.
- * - Bottom-Right Hand: Positioned bottom-right inside the visible viewport at 100% zoom.
- * - 100% visible on all desktop resolutions and zoom levels.
+ * Prominent, large photo-realistic human hand cutouts (100% transparent background):
+ * - Top-Left Hand: Reaches in smoothly from the top-left of the viewport.
+ * - Bottom-Right Hand: Reaches in smoothly from the bottom-right of the viewport.
+ * - Prominent sizing (460px - 560px on desktop) for impressive visual presence.
  */
 export function CaringHandsEmblem() {
   return (
@@ -16,7 +16,7 @@ export function CaringHandsEmblem() {
       <style>{`
         @keyframes handTopVisibleSlide {
           0% {
-            transform: translate(-15vw, -15vh) rotate(-15deg);
+            transform: translate(-18vw, -18vh) rotate(-15deg);
             opacity: 0;
           }
           70% {
@@ -31,7 +31,7 @@ export function CaringHandsEmblem() {
 
         @keyframes handBottomVisibleSlide {
           0% {
-            transform: translate(15vw, 15vh) rotate(15deg);
+            transform: translate(18vw, 18vh) rotate(15deg);
             opacity: 0;
           }
           70% {
@@ -44,30 +44,30 @@ export function CaringHandsEmblem() {
           }
         }
 
-        .animate-top-hand-visible {
+        .animate-top-hand-large {
           animation: handTopVisibleSlide 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .animate-bottom-hand-visible {
-          animation: handBottomVisibleSlide 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-bottom-hand-large {
+          animation: handBottomSlideIn 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
 
-      {/* Real Transparent Top-Left Human Hand (100% visible at 100% zoom) */}
-      <div className="absolute top-[3%] left-[1%] w-[26vw] min-w-[240px] max-w-[380px] aspect-square animate-top-hand-visible pointer-events-none">
+      {/* Prominent Real Transparent Top-Left Human Hand */}
+      <div className="absolute top-0 left-0 w-[38vw] sm:w-[42vw] md:w-[480px] lg:w-[560px] aspect-square animate-top-hand-large pointer-events-none">
         <img
           src="/images/nokia_top_hand.png"
           alt="Connecting Human Hand Top"
-          className="w-full h-full object-contain filter drop-shadow-lg"
+          className="w-full h-full object-contain filter drop-shadow-2xl"
         />
       </div>
 
-      {/* Real Transparent Bottom-Right Human Hand (100% visible at 100% zoom) */}
-      <div className="absolute top-[42%] sm:top-[38%] right-[1%] w-[26vw] min-w-[240px] max-w-[380px] aspect-square animate-bottom-hand-visible pointer-events-none">
+      {/* Prominent Real Transparent Bottom-Right Human Hand */}
+      <div className="absolute bottom-0 right-0 w-[38vw] sm:w-[42vw] md:w-[480px] lg:w-[560px] aspect-square animate-top-hand-large pointer-events-none style-bottom">
         <img
           src="/images/nokia_bottom_hand.png"
           alt="Connecting Human Hand Bottom"
-          className="w-full h-full object-contain filter drop-shadow-lg"
+          className="w-full h-full object-contain filter drop-shadow-2xl"
         />
       </div>
     </div>
