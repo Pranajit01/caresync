@@ -34,7 +34,7 @@ export default function SignupPage() {
         hospitalId: role === "hospital_admin" ? hospitalId : undefined,
       });
 
-      // 2. Attempt immediate auto-login so the user isn't blocked by email confirmation
+      // 2. Attempt immediate auto-login
       try {
         const loginData = await signInUser({ email, password });
         if (loginData.user) {
@@ -44,7 +44,6 @@ export default function SignupPage() {
           return;
         }
       } catch {
-        // If immediate sign-in is pending confirmation, redirect cleanly to login page with prefilled email
         router.push(
           `/login?registered=true&email=${encodeURIComponent(email)}&role=${role}`
         );
@@ -63,7 +62,22 @@ export default function SignupPage() {
     } catch (err: unknown) {
       if (err instanceof Error) {
         const msg = err.message;
-        if (msg.includes("already registered") || msg.includes("already been registered")) {
+        if (msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("exceeded")) {
+          // Check if sign-in works immediately despite rate limit on email send
+          try {
+            const loginData = await signInUser({ email, password });
+            if (loginData.user) {
+              const targetPath = role === "patient" ? "/patient/dashboard" : "/admin/dashboard";
+              router.push(targetPath);
+              router.refresh();
+              return;
+            }
+          } catch {
+            setError(
+              "Supabase email rate limit reached. Please try logging in directly or wait 5 minutes."
+            );
+          }
+        } else if (msg.includes("already registered") || msg.includes("already been registered")) {
           setError("An account with this email already exists. Please log in instead.");
         } else if (msg.includes("Password should be")) {
           setError("Password must be at least 6 characters long.");
