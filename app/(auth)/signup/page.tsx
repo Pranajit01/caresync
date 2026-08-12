@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signUpUser, signInUser, UserRole } from "@/lib/auth";
+import { signInUser, UserRole } from "@/lib/auth";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -24,33 +24,31 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      // 1. Sign up the user with metadata
-      const data = await signUpUser({
-        email,
-        password,
-        fullName,
-        role,
-        phone,
-        hospitalId: role === "hospital_admin" ? hospitalId : undefined,
+      // 1. Call server-side signup route which auto-confirms user and bypasses email rate limits 100%
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          role,
+          phone,
+          hospitalId: role === "hospital_admin" ? hospitalId : undefined,
+        }),
       });
 
-      // 2. Attempt immediate auto-login
-      try {
-        const loginData = await signInUser({ email, password });
-        if (loginData.user) {
-          const targetPath = role === "patient" ? "/patient/dashboard" : "/admin/dashboard";
-          router.push(targetPath);
-          router.refresh();
-          return;
-        }
-      } catch {
-        router.push(
-          `/login?registered=true&email=${encodeURIComponent(email)}&role=${role}`
-        );
+      const json = await res.json();
+
+      if (!res.ok || json.error) {
+        setError(json.error || "Failed to create account. Please try again.");
+        setLoading(false);
         return;
       }
 
-      if (data.session) {
+      // 2. Perform instant login & session cookie establishment
+      const loginData = await signInUser({ email, password });
+      if (loginData.user) {
         const targetPath = role === "patient" ? "/patient/dashboard" : "/admin/dashboard";
         router.push(targetPath);
         router.refresh();
@@ -61,31 +59,7 @@ export default function SignupPage() {
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        const msg = err.message;
-        if (msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("exceeded")) {
-          // Check if sign-in works immediately despite rate limit on email send
-          try {
-            const loginData = await signInUser({ email, password });
-            if (loginData.user) {
-              const targetPath = role === "patient" ? "/patient/dashboard" : "/admin/dashboard";
-              router.push(targetPath);
-              router.refresh();
-              return;
-            }
-          } catch {
-            setError(
-              "Supabase email rate limit reached. Please try logging in directly or wait 5 minutes."
-            );
-          }
-        } else if (msg.includes("already registered") || msg.includes("already been registered")) {
-          setError("An account with this email already exists. Please log in instead.");
-        } else if (msg.includes("Password should be")) {
-          setError("Password must be at least 6 characters long.");
-        } else if (msg.toLowerCase().includes("fetch")) {
-          setError("Unable to connect. Please check your internet connection and try again.");
-        } else {
-          setError(msg);
-        }
+        setError(err.message);
       } else {
         setError("Failed to sign up. Please try again.");
       }
