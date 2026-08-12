@@ -1,24 +1,21 @@
 import { createBrowserClient } from "@supabase/ssr";
 
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  "https://ejxwayporwalikzpbhiq.supabase.co";
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqeHdheXBvcndhbGlrenBiaGlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1MzYzMDYsImV4cCI6MjEwMjExMjMwNn0.QVpRJXPZCWk_hLODBMyn98D25XaVQlpwv6LG-W2jehk";
+
 /**
  * Browser-side Supabase client using @supabase/ssr.
- * This correctly handles cookie-based session persistence for the
- * Next.js App Router (client components, hooks, etc.).
- *
- * Call this function inside client components — do NOT call at module level.
+ * Includes fallback defaults for safe build-time static page generation on Vercel.
  */
 export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
 
 /**
- * Singleton instance for use in non-component files (lib/auth.ts, etc.)
- * where we know we're always in a browser context.
+ * Singleton instance for browser contexts and auth helpers.
  */
-export const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
