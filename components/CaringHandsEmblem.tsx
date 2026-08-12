@@ -4,13 +4,7 @@ import React from "react";
 
 /**
  * CaringHandsEmblem Component
- *
- * Real photo-realistic human hand cutouts (100% transparent background):
- * - Top-Left Hand: Reaches in smoothly from the top-left corner of the browser window.
- * - Bottom-Right Hand: Reaches in smoothly from the bottom-right corner of the browser window.
- * - Center Emblem: Enhanced glowing healthcare heart with an animated teal ECG heartbeat line.
- *
- * Positioned in backdrop layers to ensure 100% text readability for all header and hero text.
+ * Real photo-realistic human hand cutouts reaching from top-left and bottom-right screen corners.
  */
 export function CaringHandsEmblem() {
   return (
@@ -46,6 +40,45 @@ export function CaringHandsEmblem() {
           }
         }
 
+        .animate-top-hand-transparent {
+          animation: handTopSlideIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-bottom-hand-transparent {
+          animation: handBottomSlideIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+
+      {/* Real Transparent Top-Left Human Hand */}
+      <div className="absolute top-0 left-0 w-80 sm:w-[420px] md:w-[540px] aspect-square animate-top-hand-transparent pointer-events-none">
+        <img
+          src="/images/nokia_top_hand.png"
+          alt="Connecting Human Hand Top"
+          className="w-full h-full object-contain filter drop-shadow-xl"
+        />
+      </div>
+
+      {/* Real Transparent Bottom-Right Human Hand */}
+      <div className="absolute bottom-0 right-0 w-80 sm:w-[420px] md:w-[540px] aspect-square animate-bottom-hand-transparent pointer-events-none">
+        <img
+          src="/images/nokia_bottom_hand.png"
+          alt="Connecting Human Hand Bottom"
+          className="w-full h-full object-contain filter drop-shadow-xl"
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * CaringHeartEmblem Component
+ * Glowing Healthcare Heart with animated ECG heartbeat stream.
+ * Renders in its own dedicated space between the main headline and the tagline text.
+ */
+export function CaringHeartEmblem() {
+  return (
+    <div className="relative w-36 h-36 sm:w-48 sm:h-48 mx-auto my-4 flex items-center justify-center pointer-events-none select-none">
+      <style>{`
         @keyframes centerHeartIgnite {
           0% {
             transform: scale(0.5);
@@ -80,98 +113,69 @@ export function CaringHandsEmblem() {
           100% { stroke-dashoffset: -400; }
         }
 
-        .animate-top-hand-transparent {
-          animation: handTopSlideIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .animate-bottom-hand-transparent {
-          animation: handBottomSlideIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
         .animate-heart-ignite-glow {
-          animation: centerHeartIgnite 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s forwards,
-                     heartPulseContinuous 3.2s ease-in-out infinite 2s;
+          animation: centerHeartIgnite 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards,
+                     heartPulseContinuous 3.2s ease-in-out infinite 1.6s;
         }
 
         .animate-ecg-stream {
           stroke-dasharray: 400;
-          animation: ecgStreamFlow 2.2s linear infinite 1.2s;
+          animation: ecgStreamFlow 2.2s linear infinite 0.8s;
         }
       `}</style>
 
-      {/* Real Transparent Top-Left Human Hand */}
-      <div className="absolute top-0 left-0 w-80 sm:w-[420px] md:w-[540px] aspect-square animate-top-hand-transparent pointer-events-none">
-        <img
-          src="/images/nokia_top_hand.png"
-          alt="Connecting Human Hand Top"
-          className="w-full h-full object-contain filter drop-shadow-xl"
-        />
-      </div>
+      <svg
+        viewBox="0 0 400 400"
+        className="w-full h-full animate-heart-ignite-glow overflow-visible"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <radialGradient id="realHeartGrad" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="35%" stopColor="#FFF0F3" />
+            <stop offset="85%" stopColor="#E63946" />
+            <stop offset="100%" stopColor="#C1121F" />
+          </radialGradient>
+        </defs>
 
-      {/* Real Transparent Bottom-Right Human Hand */}
-      <div className="absolute bottom-0 right-0 w-80 sm:w-[420px] md:w-[540px] aspect-square animate-bottom-hand-transparent pointer-events-none">
-        <img
-          src="/images/nokia_bottom_hand.png"
-          alt="Connecting Human Hand Bottom"
-          className="w-full h-full object-contain filter drop-shadow-xl"
-        />
-      </div>
+        {/* Ambient Glow Disk */}
+        <circle cx="200" cy="200" r="140" fill="#E63946" fillOpacity="0.22" className="blur-2xl" />
 
-      {/* Center Healthcare Heart Emblem with Animated ECG Stream */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-60 sm:h-60 pointer-events-none opacity-95">
-        <svg
-          viewBox="0 0 400 400"
-          className="w-full h-full animate-heart-ignite-glow overflow-visible"
+        {/* Heart Emblem */}
+        <path
+          d="M 200 270
+             C 130 220, 105 175, 125 140
+             C 145 105, 188 118, 200 142
+             C 212 118, 255 105, 275 140
+             C 295 175, 270 220, 200 270 Z"
+          fill="url(#realHeartGrad)"
+          stroke="#FFFFFF"
+          strokeWidth="3.5"
+          strokeLinejoin="round"
+        />
+
+        {/* Base ECG Line */}
+        <path
+          d="M 115 190 L 160 190 L 170 155 L 183 220 L 201 140 L 215 205 L 225 190 L 285 190"
           fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <radialGradient id="realHeartGrad" cx="50%" cy="40%" r="60%">
-              <stop offset="0%" stopColor="#FFFFFF" />
-              <stop offset="35%" stopColor="#FFF0F3" />
-              <stop offset="85%" stopColor="#E63946" />
-              <stop offset="100%" stopColor="#C1121F" />
-            </radialGradient>
-          </defs>
+          stroke="#1D3557"
+          strokeWidth="4.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
 
-          {/* Ambient Glow Disk */}
-          <circle cx="200" cy="200" r="140" fill="#E63946" fillOpacity="0.2" className="blur-2xl" />
-
-          {/* Heart Emblem */}
-          <path
-            d="M 200 270
-               C 130 220, 105 175, 125 140
-               C 145 105, 188 118, 200 142
-               C 212 118, 255 105, 275 140
-               C 295 175, 270 220, 200 270 Z"
-            fill="url(#realHeartGrad)"
-            stroke="#FFFFFF"
-            strokeWidth="3.5"
-            strokeLinejoin="round"
-          />
-
-          {/* Base ECG Line */}
-          <path
-            d="M 115 190 L 160 190 L 170 155 L 183 220 L 201 140 L 215 205 L 225 190 L 285 190"
-            fill="none"
-            stroke="#1D3557"
-            strokeWidth="4.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Animated Cyan/Teal Pulse Wave */}
-          <path
-            d="M 115 190 L 160 190 L 170 155 L 183 220 L 201 140 L 215 205 L 225 190 L 285 190"
-            fill="none"
-            stroke="#2A9D8F"
-            strokeWidth="4.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="animate-ecg-stream"
-          />
-        </svg>
-      </div>
+        {/* Animated Cyan/Teal Pulse Wave */}
+        <path
+          d="M 115 190 L 160 190 L 170 155 L 183 220 L 201 140 L 215 205 L 225 190 L 285 190"
+          fill="none"
+          stroke="#2A9D8F"
+          strokeWidth="4.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="animate-ecg-stream"
+        />
+      </svg>
     </div>
   );
 }

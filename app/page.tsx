@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { LiquidEther } from "@/components/LiquidEther";
-import { CaringHandsEmblem } from "@/components/CaringHandsEmblem";
+import { CaringHandsEmblem, CaringHeartEmblem } from "@/components/CaringHandsEmblem";
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<{
@@ -38,10 +38,10 @@ export default function Home() {
         />
       </div>
 
-      {/* Real Transparent Photo Human Connecting Hands Backdrop Layer */}
+      {/* Real Transparent Photo Human Connecting Hands Corner Layer */}
       <CaringHandsEmblem />
 
-      {/* Header (Z-Index 30 ensures CareSync logo and nav buttons are 100% crisp and visible) */}
+      {/* Header */}
       <header className="relative z-30 max-w-6xl mx-auto w-full px-6 py-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 drop-shadow-2xs">
@@ -80,24 +80,29 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section (Z-Index 30 ensures headline and tagline text are 100% readable & front-and-center) */}
-      <main className="relative z-30 max-w-4xl mx-auto px-6 py-12 text-center my-auto">
-        <span className="inline-block px-4 py-1.5 bg-white/90 backdrop-blur-sm text-[#E63946] text-xs font-bold rounded-full border border-red-200 shadow-2xs mb-6 tracking-wide">
+      {/* Hero Section */}
+      <main className="relative z-30 max-w-4xl mx-auto px-6 py-8 text-center my-auto">
+        <span className="inline-block px-4 py-1.5 bg-white/90 backdrop-blur-sm text-[#E63946] text-xs font-bold rounded-full border border-red-200 shadow-2xs mb-4 tracking-wide">
           Real-Time Smart OPD & Emergency Healthcare
         </span>
 
+        {/* 1. Main Headline */}
         <h2 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 tracking-tight leading-tight drop-shadow-2xs">
           Connected Care. <br />
           <span className="text-[#E63946]">Better Health.</span>
         </h2>
 
-        <p className="mt-6 text-base sm:text-lg text-zinc-700 max-w-2xl mx-auto leading-relaxed font-semibold bg-white/40 backdrop-blur-3xs p-3 rounded-2xl border border-white/50 shadow-2xs">
+        {/* 2. Featured Glowing Heart & ECG Pulse Wave (Placed right in the middle between title & tagline) */}
+        <CaringHeartEmblem />
+
+        {/* 3. Tagline Paragraph Text (Now 100% visible below the heart emblem) */}
+        <p className="mt-2 text-base sm:text-lg text-zinc-700 max-w-2xl mx-auto leading-relaxed font-semibold bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-white/80 shadow-2xs">
           CareSync connects patients directly with live doctor OPD queues and
           emergency bed availability across hospitals in real time — reducing
           wait times and saving lives.
         </p>
 
-        {/* CTA Buttons */}
+        {/* 4. CTA Buttons */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/signup?role=patient"
@@ -114,7 +119,7 @@ export default function Home() {
         </div>
 
         {/* Trust Badges */}
-        <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left max-w-3xl mx-auto">
+        <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left max-w-3xl mx-auto">
           <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
             <h3 className="font-bold text-zinc-900 text-sm mb-1">
               Live Token Tracking
