@@ -170,4 +170,4 @@ npm run build
 ---
 
 ## 📄 License
-CareSync MVP &mdash; Built for Google Antigravity.
+CareSync Platform &mdash; Real-Time Smart OPD & Emergency Healthcare.

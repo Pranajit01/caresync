@@ -149,7 +149,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="relative z-30 border-t border-zinc-200/80 bg-white/90 backdrop-blur-xs py-6 text-center text-xs text-zinc-500 font-medium">
-        CareSync Platform — MVP Built for Google Antigravity
+        © {new Date().getFullYear()} CareSync Platform — Real-Time Smart OPD & Emergency Healthcare
       </footer>
     </div>
   );
