@@ -38,11 +38,11 @@ export default function Home() {
         />
       </div>
 
-      {/* Real Transparent Photo Human Connecting Hands Corner Layer */}
+      {/* Real Transparent Photo Human Connecting Hands (Opposite Corners) */}
       <CaringHandsEmblem />
 
       {/* Header */}
-      <header className="relative z-30 max-w-6xl mx-auto w-full px-6 py-6 flex items-center justify-between">
+      <header className="relative z-30 max-w-6xl mx-auto w-full px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 drop-shadow-2xs">
             Care<span className="text-[#E63946]">Sync</span>
@@ -80,67 +80,67 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="relative z-30 max-w-4xl mx-auto px-6 py-8 text-center my-auto">
-        <span className="inline-block px-4 py-1.5 bg-white/90 backdrop-blur-sm text-[#E63946] text-xs font-bold rounded-full border border-red-200 shadow-2xs mb-4 tracking-wide">
+      {/* Hero Section (Compact padding & sizing so it fits cleanly on screen at 100% zoom) */}
+      <main className="relative z-30 max-w-4xl mx-auto px-6 py-4 text-center my-auto">
+        <span className="inline-block px-3.5 py-1 bg-white/90 backdrop-blur-sm text-[#E63946] text-xs font-bold rounded-full border border-red-200 shadow-2xs mb-3 tracking-wide">
           Real-Time Smart OPD & Emergency Healthcare
         </span>
 
         {/* 1. Main Headline */}
-        <h2 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 tracking-tight leading-tight drop-shadow-2xs">
+        <h2 className="text-3xl sm:text-5xl font-extrabold text-zinc-900 tracking-tight leading-tight drop-shadow-2xs">
           Connected Care. <br />
           <span className="text-[#E63946]">Better Health.</span>
         </h2>
 
-        {/* 2. Featured Glowing Heart & ECG Pulse Wave (Placed right in the middle between title & tagline) */}
+        {/* 2. Compact Glowing Heart & Teal ECG Wave */}
         <CaringHeartEmblem />
 
-        {/* 3. Tagline Paragraph Text (Now 100% visible below the heart emblem) */}
-        <p className="mt-2 text-base sm:text-lg text-zinc-700 max-w-2xl mx-auto leading-relaxed font-semibold bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-white/80 shadow-2xs">
+        {/* 3. Tagline Paragraph Card */}
+        <p className="mt-1 text-sm sm:text-base text-zinc-700 max-w-xl mx-auto leading-relaxed font-semibold bg-white/60 backdrop-blur-sm p-3 rounded-xl border border-white/80 shadow-2xs">
           CareSync connects patients directly with live doctor OPD queues and
           emergency bed availability across hospitals in real time — reducing
           wait times and saving lives.
         </p>
 
         {/* 4. CTA Buttons */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="/signup?role=patient"
-            className="w-full sm:w-auto px-8 py-3.5 bg-[#E63946] hover:bg-[#d62837] text-white font-semibold text-sm rounded-xl transition-all shadow-sm hover:shadow-md text-center"
+            className="w-full sm:w-auto px-7 py-3 bg-[#E63946] hover:bg-[#d62837] text-white font-semibold text-sm rounded-xl transition-all shadow-sm hover:shadow-md text-center"
           >
             Patient Portal & Appointment Booking
           </Link>
           <Link
             href="/signup?role=hospital_admin"
-            className="w-full sm:w-auto px-8 py-3.5 bg-white/95 backdrop-blur-sm hover:bg-zinc-100 border border-zinc-300 text-zinc-800 font-semibold text-sm rounded-xl transition-all text-center shadow-2xs"
+            className="w-full sm:w-auto px-7 py-3 bg-white/95 backdrop-blur-sm hover:bg-zinc-100 border border-zinc-300 text-zinc-800 font-semibold text-sm rounded-xl transition-all text-center shadow-2xs"
           >
             Hospital Staff Portal
           </Link>
         </div>
 
-        {/* Trust Badges */}
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left max-w-3xl mx-auto">
-          <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
-            <h3 className="font-bold text-zinc-900 text-sm mb-1">
+        {/* 5. Trust Feature Cards */}
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-3xl mx-auto">
+          <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-zinc-200/80 shadow-xs">
+            <h3 className="font-bold text-zinc-900 text-xs mb-0.5">
               Live Token Tracking
             </h3>
-            <p className="text-xs text-zinc-600">
+            <p className="text-[11px] text-zinc-600 leading-snug">
               Track your OPD queue status live from anywhere without standing in line.
             </p>
           </div>
-          <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
-            <h3 className="font-bold text-zinc-900 text-sm mb-1">
+          <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-zinc-200/80 shadow-xs">
+            <h3 className="font-bold text-zinc-900 text-xs mb-0.5">
               Emergency Bed Finder
             </h3>
-            <p className="text-xs text-zinc-600">
+            <p className="text-[11px] text-zinc-600 leading-snug">
               Instant visibility into ICU, General, and Emergency bed counts.
             </p>
           </div>
-          <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
-            <h3 className="font-bold text-zinc-900 text-sm mb-1">
+          <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-zinc-200/80 shadow-xs">
+            <h3 className="font-bold text-zinc-900 text-xs mb-0.5">
               Hospital Admin Hub
             </h3>
-            <p className="text-xs text-zinc-600">
+            <p className="text-[11px] text-zinc-600 leading-snug">
               One-tap doctor consultation queue management & bed updates.
             </p>
           </div>
@@ -148,7 +148,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-30 border-t border-zinc-200/80 bg-white/90 backdrop-blur-xs py-6 text-center text-xs text-zinc-500 font-medium">
+      <footer className="relative z-30 border-t border-zinc-200/80 bg-white/90 backdrop-blur-xs py-4 text-center text-xs text-zinc-500 font-medium">
         © {new Date().getFullYear()} CareSync Platform — Real-Time Smart OPD & Emergency Healthcare
       </footer>
     </div>

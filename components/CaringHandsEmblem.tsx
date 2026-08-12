@@ -5,16 +5,16 @@ import React from "react";
 /**
  * CaringHandsEmblem Component
  *
- * Prominent, large photo-realistic human hand cutouts (100% transparent background):
- * - Top-Left Hand: Reaches in smoothly from the top-left of the viewport.
- * - Bottom-Right Hand: Reaches in smoothly from the bottom-right of the viewport.
- * - Prominent sizing (460px - 560px on desktop) for impressive visual presence.
+ * Real photo-realistic human hand cutouts:
+ * - Top-Left Hand: Enters cleanly from the top-left corner.
+ * - Bottom-Right Hand: Enters cleanly from the bottom-right corner.
+ * - Sized perfectly so the layout fits within 100% browser zoom without overflowing.
  */
 export function CaringHandsEmblem() {
   return (
     <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
       <style>{`
-        @keyframes handTopVisibleSlide {
+        @keyframes handTopSlideIn {
           0% {
             transform: translate(-18vw, -18vh) rotate(-15deg);
             opacity: 0;
@@ -25,11 +25,11 @@ export function CaringHandsEmblem() {
           }
           100% {
             transform: translate(0, 0) rotate(0deg);
-            opacity: 0.95;
+            opacity: 0.92;
           }
         }
 
-        @keyframes handBottomVisibleSlide {
+        @keyframes handBottomSlideIn {
           0% {
             transform: translate(18vw, 18vh) rotate(15deg);
             opacity: 0;
@@ -40,34 +40,34 @@ export function CaringHandsEmblem() {
           }
           100% {
             transform: translate(0, 0) rotate(0deg);
-            opacity: 0.95;
+            opacity: 0.92;
           }
         }
 
-        .animate-top-hand-large {
-          animation: handTopVisibleSlide 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-top-hand-slide {
+          animation: handTopSlideIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .animate-bottom-hand-large {
-          animation: handBottomSlideIn 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-bottom-hand-slide {
+          animation: handBottomSlideIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
 
-      {/* Prominent Real Transparent Top-Left Human Hand */}
-      <div className="absolute top-0 left-0 w-[38vw] sm:w-[42vw] md:w-[480px] lg:w-[560px] aspect-square animate-top-hand-large pointer-events-none">
+      {/* Top-Left Corner Hand */}
+      <div className="absolute top-0 left-0 w-[28vw] min-w-[200px] max-w-[380px] aspect-square animate-top-hand-slide pointer-events-none">
         <img
           src="/images/nokia_top_hand.png"
-          alt="Connecting Human Hand Top"
-          className="w-full h-full object-contain filter drop-shadow-2xl"
+          alt="Connecting Human Hand Top Left"
+          className="w-full h-full object-contain filter drop-shadow-xl"
         />
       </div>
 
-      {/* Prominent Real Transparent Bottom-Right Human Hand */}
-      <div className="absolute bottom-0 right-0 w-[38vw] sm:w-[42vw] md:w-[480px] lg:w-[560px] aspect-square animate-top-hand-large pointer-events-none style-bottom">
+      {/* Bottom-Right Corner Hand */}
+      <div className="absolute bottom-0 right-0 w-[28vw] min-w-[200px] max-w-[380px] aspect-square animate-bottom-hand-slide pointer-events-none">
         <img
           src="/images/nokia_bottom_hand.png"
-          alt="Connecting Human Hand Bottom"
-          className="w-full h-full object-contain filter drop-shadow-2xl"
+          alt="Connecting Human Hand Bottom Right"
+          className="w-full h-full object-contain filter drop-shadow-xl"
         />
       </div>
     </div>
@@ -76,12 +76,12 @@ export function CaringHandsEmblem() {
 
 /**
  * CaringHeartEmblem Component
- * Glowing Healthcare Heart with animated ECG heartbeat stream.
- * Renders in its own dedicated space between the main headline and the tagline text.
+ * Compact glowing healthcare heart emblem with animated teal ECG heartbeat stream.
+ * Fits comfortably in the hero flow at 100% zoom.
  */
 export function CaringHeartEmblem() {
   return (
-    <div className="relative w-36 h-36 sm:w-44 sm:h-44 mx-auto my-3 flex items-center justify-center pointer-events-none select-none">
+    <div className="relative w-28 h-28 sm:w-36 sm:h-36 mx-auto my-2 flex items-center justify-center pointer-events-none select-none">
       <style>{`
         @keyframes centerHeartIgnite {
           0% {
@@ -90,25 +90,25 @@ export function CaringHeartEmblem() {
             filter: drop-shadow(0 0 5px rgba(230, 57, 70, 0.2));
           }
           60% {
-            transform: scale(1.15);
+            transform: scale(1.1);
             opacity: 1;
-            filter: drop-shadow(0 0 40px rgba(230, 57, 70, 0.95)) drop-shadow(0 0 70px rgba(42, 157, 143, 0.7));
+            filter: drop-shadow(0 0 30px rgba(230, 57, 70, 0.9)) drop-shadow(0 0 50px rgba(42, 157, 143, 0.6));
           }
           100% {
             transform: scale(1);
             opacity: 1;
-            filter: drop-shadow(0 0 25px rgba(230, 57, 70, 0.7)) drop-shadow(0 0 45px rgba(42, 157, 143, 0.45));
+            filter: drop-shadow(0 0 20px rgba(230, 57, 70, 0.65)) drop-shadow(0 0 35px rgba(42, 157, 143, 0.4));
           }
         }
 
         @keyframes heartPulseContinuous {
           0%, 100% {
             transform: scale(1);
-            filter: drop-shadow(0 0 20px rgba(230, 57, 70, 0.6)) drop-shadow(0 0 40px rgba(42, 157, 143, 0.4));
+            filter: drop-shadow(0 0 16px rgba(230, 57, 70, 0.5)) drop-shadow(0 0 30px rgba(42, 157, 143, 0.35));
           }
           50% {
-            transform: scale(1.06);
-            filter: drop-shadow(0 0 35px rgba(230, 57, 70, 0.9)) drop-shadow(0 0 65px rgba(42, 157, 143, 0.65));
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 28px rgba(230, 57, 70, 0.8)) drop-shadow(0 0 50px rgba(42, 157, 143, 0.55));
           }
         }
 
@@ -118,8 +118,8 @@ export function CaringHeartEmblem() {
         }
 
         .animate-heart-ignite-glow {
-          animation: centerHeartIgnite 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards,
-                     heartPulseContinuous 3.2s ease-in-out infinite 1.6s;
+          animation: centerHeartIgnite 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards,
+                     heartPulseContinuous 3.2s ease-in-out infinite 1.5s;
         }
 
         .animate-ecg-stream {
@@ -144,7 +144,7 @@ export function CaringHeartEmblem() {
         </defs>
 
         {/* Ambient Glow Disk */}
-        <circle cx="200" cy="200" r="140" fill="#E63946" fillOpacity="0.22" className="blur-2xl" />
+        <circle cx="200" cy="200" r="140" fill="#E63946" fillOpacity="0.2" className="blur-xl" />
 
         {/* Heart Emblem */}
         <path
