@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase/client";
+import { supabaseAdmin } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const { data: appointments, error } = await supabase
+    const { data: appointments, error } = await supabaseAdmin
       .from("appointments")
       .select(`
         id,
@@ -33,6 +33,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ appointments: appointments || [] });
   } catch (err: any) {
+    console.error("my-tokens route exception:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
