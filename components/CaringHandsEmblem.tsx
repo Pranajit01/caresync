@@ -6,17 +6,17 @@ import React from "react";
  * CaringHandsEmblem Component
  *
  * Real photo-realistic human hand cutouts (100% transparent background):
- * - Mobile: Both hands visible in the top hero area (Top-Left & Top-Right) framing the headline.
- * - Desktop: Top-Left and Bottom-Right corner reaching hands.
- * - 100% visible on mobile phones & desktop, 0 lag.
+ * - Top-Left Hand: Reaches smoothly from top-left into hero area.
+ * - Bottom-Right Hand: Reaches smoothly from bottom-right into hero area (pointing up-left towards central heart).
+ * - Fast 0.8s responsive animation with 100% visibility on mobile and desktop.
  */
 export function CaringHandsEmblem() {
   return (
     <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
       <style>{`
-        @keyframes handTopMobileSlide {
+        @keyframes handTopFastSlide {
           0% {
-            transform: translate(-20vw, -10vh) rotate(-15deg);
+            transform: translate(-15vw, -15vh) rotate(-12deg);
             opacity: 0;
           }
           100% {
@@ -25,9 +25,9 @@ export function CaringHandsEmblem() {
           }
         }
 
-        @keyframes handRightMobileSlide {
+        @keyframes handBottomFastSlide {
           0% {
-            transform: translate(20vw, -10vh) rotate(15deg);
+            transform: translate(15vw, 15vh) rotate(12deg);
             opacity: 0;
           }
           100% {
@@ -36,34 +36,17 @@ export function CaringHandsEmblem() {
           }
         }
 
-        @keyframes handBottomDesktopSlide {
-          0% {
-            transform: translate(18vw, 18vh) rotate(15deg);
-            opacity: 0;
-          }
-          100% {
-            transform: translate(0, 0) rotate(0deg);
-            opacity: 0.95;
-          }
+        .animate-top-hand-fast {
+          animation: handTopFastSlide 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
-        .animate-top-hand {
-          animation: handTopMobileSlide 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        .animate-bottom-hand {
-          animation: handBottomDesktopSlide 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @media (max-width: 639px) {
-          .animate-bottom-hand {
-            animation: handRightMobileSlide 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-          }
+        .animate-bottom-hand-fast {
+          animation: handBottomFastSlide 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
       `}</style>
 
-      {/* Top-Left Human Hand (Visible at top left on both Mobile & Desktop) */}
-      <div className="absolute top-10 -left-2 sm:top-0 sm:left-0 w-36 sm:w-[28vw] sm:min-w-[200px] sm:max-w-[380px] aspect-square animate-top-hand pointer-events-none">
+      {/* Top-Left Human Hand */}
+      <div className="absolute top-12 left-0 sm:top-2 sm:left-0 w-32 sm:w-[26vw] sm:min-w-[200px] sm:max-w-[360px] aspect-square animate-top-hand-fast pointer-events-none">
         <img
           src="/images/nokia_top_hand.png"
           alt="Connecting Human Hand Top Left"
@@ -71,11 +54,11 @@ export function CaringHandsEmblem() {
         />
       </div>
 
-      {/* Right/Bottom Human Hand (Positioned at Top-Right on Mobile so BOTH hands are 100% visible at top of phone!) */}
-      <div className="absolute top-24 -right-2 sm:top-auto sm:bottom-0 sm:right-0 w-36 sm:w-[28vw] sm:min-w-[200px] sm:max-w-[380px] aspect-square animate-bottom-hand pointer-events-none">
+      {/* Bottom-Right Human Hand (Positioned at bottom-right pointing up-left as indicated by user red arrow!) */}
+      <div className="absolute top-64 right-0 sm:top-auto sm:bottom-0 sm:right-0 w-32 sm:w-[26vw] sm:min-w-[200px] sm:max-w-[360px] aspect-square animate-bottom-hand-fast pointer-events-none">
         <img
           src="/images/nokia_bottom_hand.png"
-          alt="Connecting Human Hand Right/Bottom"
+          alt="Connecting Human Hand Bottom Right"
           className="w-full h-full object-contain filter drop-shadow-xl"
         />
       </div>
@@ -127,13 +110,13 @@ export function CaringHeartEmblem() {
         }
 
         .animate-heart-ignite-glow {
-          animation: centerHeartIgnite 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards,
-                     heartPulseContinuous 3.2s ease-in-out infinite 1.5s;
+          animation: centerHeartIgnite 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards,
+                     heartPulseContinuous 3.2s ease-in-out infinite 1.2s;
         }
 
         .animate-ecg-stream {
           stroke-dasharray: 400;
-          animation: ecgStreamFlow 2.2s linear infinite 0.8s;
+          animation: ecgStreamFlow 2.2s linear infinite 0.6s;
         }
       `}</style>
 
