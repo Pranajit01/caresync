@@ -38,8 +38,11 @@ export default function Home() {
         />
       </div>
 
+      {/* Full-Screen Viewport Nokia Connecting Hands Overlay */}
+      <CaringHandsEmblem />
+
       {/* Header */}
-      <header className="relative z-10 max-w-6xl mx-auto w-full px-6 py-6 flex items-center justify-between">
+      <header className="relative z-20 max-w-6xl mx-auto w-full px-6 py-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
             Care<span className="text-[#E63946]">Sync</span>
@@ -78,22 +81,17 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <main className="relative z-10 max-w-4xl mx-auto px-6 py-10 text-center my-auto">
-        <span className="inline-block px-3.5 py-1 bg-white/85 backdrop-blur-xs text-[#E63946] text-xs font-semibold rounded-full border border-red-100 shadow-2xs mb-4">
+      <main className="relative z-20 max-w-4xl mx-auto px-6 py-12 text-center my-auto">
+        <span className="inline-block px-3.5 py-1 bg-white/85 backdrop-blur-xs text-[#E63946] text-xs font-semibold rounded-full border border-red-100 shadow-2xs mb-6">
           Real-Time Smart OPD & Emergency Healthcare
         </span>
 
-        {/* Featured Caring Hands & Heartbeat Emblem (Inspired by Reference Image) */}
-        <div className="w-52 h-52 sm:w-64 sm:h-64 mx-auto -my-2 flex items-center justify-center">
-          <CaringHandsEmblem />
-        </div>
-
-        <h2 className="text-4xl sm:text-5xl font-extrabold text-zinc-900 tracking-tight leading-tight">
+        <h2 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 tracking-tight leading-tight">
           Connected Care. <br />
           <span className="text-[#E63946]">Better Health.</span>
         </h2>
 
-        <p className="mt-4 text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed font-medium">
+        <p className="mt-6 text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed font-medium">
           CareSync connects patients directly with live doctor OPD queues and
           emergency bed availability across hospitals in real time — reducing
           wait times and saving lives.
@@ -116,7 +114,7 @@ export default function Home() {
         </div>
 
         {/* Trust Badges */}
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left max-w-3xl mx-auto">
+        <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left max-w-3xl mx-auto">
           <div className="bg-white/85 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
             <h3 className="font-bold text-zinc-900 text-sm mb-1">
               Live Token Tracking
@@ -145,7 +143,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-zinc-200/80 bg-white/80 backdrop-blur-xs py-6 text-center text-xs text-zinc-500">
+      <footer className="relative z-20 border-t border-zinc-200/80 bg-white/80 backdrop-blur-xs py-6 text-center text-xs text-zinc-500">
         CareSync Platform — MVP Built for Google Antigravity
       </footer>
     </div>

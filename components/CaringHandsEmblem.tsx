@@ -5,293 +5,277 @@ import React from "react";
 /**
  * CaringHandsEmblem Component
  *
- * Inspired by Nokia's iconic "connecting hands" animation style:
- * Two detailed hands reach out from top-left and bottom-right to meet in the center,
- * cupping around a glowing healthcare heart emblem with an animated ECG heartbeat pulse.
+ * Full-screen viewport animation inspired by Nokia's iconic connecting hands:
+ * - Top-Left Hand extends out from the top-left corner of the website screen.
+ * - Bottom-Right Hand extends out from the bottom-right corner of the website screen.
+ * - Both hands reach across the screen to gently meet around the glowing healthcare heart symbol in the center.
  *
- * Built with 100% GPU-accelerated CSS keyframe animations for 60fps smoothness.
+ * 100% GPU-accelerated CSS keyframe animations for 60fps performance without lag.
  */
 export function CaringHandsEmblem() {
   return (
-    <div className="relative w-full max-w-md mx-auto aspect-square flex items-center justify-center select-none pointer-events-none">
+    <div className="fixed inset-0 z-10 pointer-events-none overflow-hidden select-none">
       <style>{`
-        @keyframes nokiaTopHandConnect {
+        @keyframes nokiaScreenCornerTop {
           0% {
-            transform: translate(-140px, -90px) rotate(-18deg);
+            transform: translate(-30vw, -30vh) rotate(-25deg);
             opacity: 0;
           }
           70% {
-            transform: translate(6px, 4px) rotate(2deg);
+            transform: translate(2vw, 1vh) rotate(2deg);
             opacity: 1;
           }
           100% {
-            transform: translate(0px, 0px) rotate(0deg);
+            transform: translate(0, 0) rotate(0deg);
             opacity: 1;
           }
         }
 
-        @keyframes nokiaBottomHandConnect {
+        @keyframes nokiaScreenCornerBottom {
           0% {
-            transform: translate(140px, 90px) rotate(18deg);
+            transform: translate(30vw, 30vh) rotate(25deg);
             opacity: 0;
           }
           70% {
-            transform: translate(-6px, -4px) rotate(-2deg);
+            transform: translate(-2vw, -1vh) rotate(-2deg);
             opacity: 1;
           }
           100% {
-            transform: translate(0px, 0px) rotate(0deg);
+            transform: translate(0, 0) rotate(0deg);
             opacity: 1;
           }
         }
 
-        @keyframes heartIgniteGlow {
+        @keyframes centerHeartIgnite {
           0% {
-            transform: scale(0.6);
+            transform: scale(0.5);
             opacity: 0;
             filter: drop-shadow(0 0 5px rgba(230, 57, 70, 0.2));
           }
           60% {
-            transform: scale(1.1);
+            transform: scale(1.12);
             opacity: 1;
-            filter: drop-shadow(0 0 30px rgba(230, 57, 70, 0.9)) drop-shadow(0 0 50px rgba(42, 157, 143, 0.6));
+            filter: drop-shadow(0 0 40px rgba(230, 57, 70, 0.95)) drop-shadow(0 0 70px rgba(42, 157, 143, 0.7));
           }
           100% {
             transform: scale(1);
             opacity: 1;
-            filter: drop-shadow(0 0 20px rgba(230, 57, 70, 0.6)) drop-shadow(0 0 35px rgba(42, 157, 143, 0.4));
+            filter: drop-shadow(0 0 25px rgba(230, 57, 70, 0.7)) drop-shadow(0 0 45px rgba(42, 157, 143, 0.45));
           }
         }
 
-        @keyframes heartContinuousPulse {
+        @keyframes heartPulseLoop {
           0%, 100% {
             transform: scale(1);
-            filter: drop-shadow(0 0 18px rgba(230, 57, 70, 0.5)) drop-shadow(0 0 35px rgba(42, 157, 143, 0.3));
+            filter: drop-shadow(0 0 20px rgba(230, 57, 70, 0.6)) drop-shadow(0 0 40px rgba(42, 157, 143, 0.4));
           }
           50% {
             transform: scale(1.06);
-            filter: drop-shadow(0 0 28px rgba(230, 57, 70, 0.8)) drop-shadow(0 0 55px rgba(42, 157, 143, 0.6));
+            filter: drop-shadow(0 0 35px rgba(230, 57, 70, 0.9)) drop-shadow(0 0 65px rgba(42, 157, 143, 0.65));
           }
         }
 
-        @keyframes ecgLineFlow {
-          0% { stroke-dashoffset: 400; }
-          100% { stroke-dashoffset: -400; }
+        @keyframes ecgLinePulse {
+          0% { stroke-dashoffset: 500; }
+          100% { stroke-dashoffset: -500; }
         }
 
-        .animate-nokia-top-hand {
-          animation: nokiaTopHandConnect 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-corner-top-hand {
+          animation: nokiaScreenCornerTop 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           transform-origin: top left;
         }
 
-        .animate-nokia-bottom-hand {
-          animation: nokiaBottomHandConnect 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-corner-bottom-hand {
+          animation: nokiaScreenCornerBottom 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           transform-origin: bottom right;
         }
 
-        .animate-heart-ignite {
-          animation: heartIgniteGlow 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s forwards,
-                     heartContinuousPulse 3s ease-in-out infinite 2s;
+        .animate-center-heart {
+          animation: centerHeartIgnite 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s forwards,
+                     heartPulseLoop 3.2s ease-in-out infinite 2s;
           transform-origin: center;
         }
 
-        .animate-ecg-flow {
-          stroke-dasharray: 400;
-          animation: ecgLineFlow 2.2s linear infinite 1.2s;
+        .animate-ecg-stream {
+          stroke-dasharray: 500;
+          animation: ecgLinePulse 2.2s linear infinite 1.2s;
         }
       `}</style>
 
-      {/* Ambient Glow Atmosphere Behind Center */}
-      <div className="absolute inset-0 bg-radial from-red-500/20 via-teal-500/10 to-transparent blur-3xl rounded-full scale-110" />
-
       <svg
-        viewBox="0 0 500 500"
-        className="w-full h-full relative z-10 drop-shadow-2xl overflow-visible"
+        viewBox="0 0 1400 900"
+        preserveAspectRatio="xMidYMid slice"
+        className="w-full h-full"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* Radial Gradient for Glowing Heart Emblem */}
-          <radialGradient id="heartBodyGrad" cx="50%" cy="40%" r="60%">
+          {/* Radial Gradient for Center Heart */}
+          <radialGradient id="centerHeartGrad" cx="50%" cy="40%" r="60%">
             <stop offset="0%" stopColor="#FFFFFF" />
             <stop offset="35%" stopColor="#FFF0F3" />
             <stop offset="85%" stopColor="#E63946" />
             <stop offset="100%" stopColor="#C1121F" />
           </radialGradient>
 
-          {/* Linear Gradient for Hands (Realistic Tone with Medical Dark Blue Tint) */}
-          <linearGradient id="topHandSkin" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#252A34" />
-            <stop offset="60%" stopColor="#1E222A" />
-            <stop offset="100%" stopColor="#14171D" />
+          {/* Skin / Sleeve Gradients */}
+          <linearGradient id="topArmGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#1E232A" />
+            <stop offset="40%" stopColor="#2D333F" />
+            <stop offset="80%" stopColor="#1A1E24" />
+            <stop offset="100%" stopColor="#12151A" />
           </linearGradient>
 
-          <linearGradient id="bottomHandSkin" x1="100%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor="#252A34" />
-            <stop offset="60%" stopColor="#1E222A" />
-            <stop offset="100%" stopColor="#14171D" />
+          <linearGradient id="bottomArmGrad" x1="100%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#1E232A" />
+            <stop offset="40%" stopColor="#2D333F" />
+            <stop offset="80%" stopColor="#1A1E24" />
+            <stop offset="100%" stopColor="#12151A" />
           </linearGradient>
 
-          {/* Highlights for Fingers */}
-          <linearGradient id="topFingerHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#E63946" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.3" />
+          {/* Accent Highlights */}
+          <linearGradient id="topGlowLine" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#E63946" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.4" />
           </linearGradient>
 
-          <linearGradient id="bottomFingerHighlight" x1="100%" y1="100%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#2A9D8F" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.3" />
+          <linearGradient id="bottomGlowLine" x1="100%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#2A9D8F" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.4" />
           </linearGradient>
         </defs>
 
         {/* ========================================================================= */}
-        {/* CENTER GLOWING HEART & ECG PULSE SYMBOL */}
+        {/* TOP-LEFT SCREEN CORNER HAND (Extends from top-left of site to center) */}
         {/* ========================================================================= */}
-        <g className="animate-heart-ignite" style={{ opacity: 0 }}>
-          {/* Heart Emblem Path */}
+        <g className="animate-corner-top-hand">
+          {/* Long Arm extending from offscreen top-left (0,0) towards center (700, 360) */}
           <path
-            d="M 250 320
-               C 165 260, 135 205, 160 165
-               C 185 125, 235 140, 250 170
-               C 265 140, 315 125, 340 165
-               C 365 205, 335 260, 250 320 Z"
-            fill="url(#heartBodyGrad)"
+            d="M -150 -150
+               C 0 -50, 150 50, 300 140
+               C 420 210, 520 250, 630 280
+               C 690 295, 730 320, 765 350
+               C 745 375, 715 378, 660 365
+               C 580 345, 480 315, 360 270
+               C 220 220, 80 150, -150 40 Z"
+            fill="url(#topArmGrad)"
+            stroke="#3B4252"
+            strokeWidth="2.5"
+          />
+
+          {/* Hand Details & Thumb */}
+          <path
+            d="M 520 250 C 560 280, 595 315, 590 355 C 575 368, 545 360, 520 335 C 500 315, 490 285, 520 250 Z"
+            fill="url(#topArmGrad)"
+            stroke="#4C566A"
+            strokeWidth="2"
+          />
+
+          {/* Index & Fingertip Contour extending right above heart */}
+          <path
+            d="M 630 280 C 690 295, 730 320, 765 350 C 755 365, 730 368, 680 350 C 620 330, 560 305, 530 295"
+            fill="none"
+            stroke="url(#topGlowLine)"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
+
+          {/* Middle & Ring Finger Contours */}
+          <path
+            d="M 615 295 C 670 310, 710 335, 745 370 C 735 382, 710 382, 665 365 C 605 345, 550 322, 520 312"
+            fill="none"
+            stroke="#D8DEE9"
+            strokeWidth="2.5"
+            strokeOpacity="0.4"
+            strokeLinecap="round"
+          />
+        </g>
+
+        {/* ========================================================================= */}
+        {/* BOTTOM-RIGHT SCREEN CORNER HAND (Extends from bottom-right to center) */}
+        {/* ========================================================================= */}
+        <g className="animate-corner-bottom-hand">
+          {/* Long Arm extending from offscreen bottom-right (1550,1050) towards center (700, 440) */}
+          <path
+            d="M 1550 1050
+               C 1400 950, 1250 850, 1100 760
+               C 980 690, 880 650, 770 620
+               C 710 605, 670 580, 635 550
+               C 655 525, 685 522, 740 535
+               C 820 555, 920 585, 1040 630
+               C 1180 680, 1320 750, 1550 860 Z"
+            fill="url(#bottomArmGrad)"
+            stroke="#3B4252"
+            strokeWidth="2.5"
+          />
+
+          {/* Hand Details & Thumb */}
+          <path
+            d="M 880 650 C 840 620, 805 585, 810 545 C 825 532, 855 540, 880 565 C 900 585, 910 615, 880 650 Z"
+            fill="url(#bottomArmGrad)"
+            stroke="#4C566A"
+            strokeWidth="2"
+          />
+
+          {/* Index & Fingertip Contour extending left under heart */}
+          <path
+            d="M 770 620 C 710 605, 670 580, 635 550 C 645 535, 670 532, 720 550 C 780 570, 840 595, 870 605"
+            fill="none"
+            stroke="url(#bottomGlowLine)"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
+
+          {/* Middle & Ring Finger Contours */}
+          <path
+            d="M 785 605 C 730 590, 690 565, 655 530 C 665 518, 690 518, 735 535 C 795 555, 850 578, 880 588"
+            fill="none"
+            stroke="#D8DEE9"
+            strokeWidth="2.5"
+            strokeOpacity="0.4"
+            strokeLinecap="round"
+          />
+        </g>
+
+        {/* ========================================================================= */}
+        {/* CENTER GLOWING HEALTHCARE HEART EMBLEM */}
+        {/* ========================================================================= */}
+        <g className="animate-center-heart" style={{ opacity: 0 }}>
+          {/* Ambient Glow Disk Behind Heart */}
+          <circle cx="700" cy="450" r="120" fill="#E63946" fillOpacity="0.15" className="blur-xl" />
+
+          {/* Heart Emblem Path centered at (700, 450) */}
+          <path
+            d="M 700 540
+               C 590 460, 550 390, 580 340
+               C 610 290, 680 310, 700 350
+               C 720 310, 790 290, 820 340
+               C 850 390, 810 460, 700 540 Z"
+            fill="url(#centerHeartGrad)"
             stroke="#FFFFFF"
-            strokeWidth="3.5"
+            strokeWidth="4.5"
             strokeLinejoin="round"
           />
 
-          {/* Base ECG Line */}
+          {/* Base Dark ECG Line */}
           <path
-            d="M 150 230 L 205 230 L 218 190 L 234 270 L 252 175 L 268 250 L 278 230 L 350 230"
+            d="M 570 425 L 640 425 L 656 375 L 678 475 L 702 350 L 724 450 L 738 425 L 830 425"
             fill="none"
             stroke="#1D3557"
-            strokeWidth="5"
+            strokeWidth="6"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
 
           {/* Animated Cyan/Teal Pulse Wave Line */}
           <path
-            d="M 150 230 L 205 230 L 218 190 L 234 270 L 252 175 L 268 250 L 278 230 L 350 230"
+            d="M 570 425 L 640 425 L 656 375 L 678 475 L 702 350 L 724 450 L 738 425 L 830 425"
             fill="none"
             stroke="#2A9D8F"
-            strokeWidth="5"
+            strokeWidth="6"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="animate-ecg-flow"
-          />
-        </g>
-
-        {/* ========================================================================= */}
-        {/* TOP-LEFT HAND (Reaching in from top-left, cupping downwards over heart) */}
-        {/* ========================================================================= */}
-        <g className="animate-nokia-top-hand">
-          {/* Forearm & Wrist extending offscreen top-left */}
-          <path
-            d="M -30 20
-               C 30 20, 90 40, 150 70
-               C 195 92, 235 110, 280 115
-               C 320 120, 360 135, 385 160
-               C 365 175, 340 178, 300 168
-               C 255 156, 210 142, 160 135
-               C 110 128, 50 115, -30 90 Z"
-            fill="url(#topHandSkin)"
-            stroke="#3B4252"
-            strokeWidth="2"
-          />
-
-          {/* Detailed Thumb (Curving gently inward) */}
-          <path
-            d="M 195 92 C 220 110, 240 135, 235 160 C 225 170, 205 165, 190 148 C 180 135, 175 115, 195 92 Z"
-            fill="url(#topHandSkin)"
-            stroke="#4C566A"
-            strokeWidth="1.5"
-          />
-
-          {/* Index Finger (Extending right above heart) */}
-          <path
-            d="M 280 115 C 320 118, 360 132, 388 158 C 382 168, 365 172, 335 160 C 300 148, 270 136, 250 130"
-            fill="none"
-            stroke="url(#topFingerHighlight)"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-
-          {/* Middle Finger */}
-          <path
-            d="M 270 125 C 310 130, 350 145, 378 172 C 370 180, 355 182, 325 170 C 290 156, 260 144, 240 138"
-            fill="none"
-            stroke="#D8DEE9"
-            strokeWidth="2"
-            strokeOpacity="0.4"
-            strokeLinecap="round"
-          />
-
-          {/* Ring & Pinky Contour Details */}
-          <path
-            d="M 255 135 C 290 142, 330 158, 355 185 C 348 190, 335 190, 310 178"
-            fill="none"
-            stroke="#D8DEE9"
-            strokeWidth="1.5"
-            strokeOpacity="0.25"
-            strokeLinecap="round"
-          />
-        </g>
-
-        {/* ========================================================================= */}
-        {/* BOTTOM-RIGHT HAND (Reaching in from bottom-right, cupping upwards under heart) */}
-        {/* ========================================================================= */}
-        <g className="animate-nokia-bottom-hand">
-          {/* Forearm & Wrist extending offscreen bottom-right */}
-          <path
-            d="M 530 480
-               C 470 480, 410 460, 350 430
-               C 305 408, 265 390, 220 385
-               C 180 380, 140 365, 115 340
-               C 135 325, 160 322, 200 332
-               C 245 344, 290 358, 340 365
-               C 390 372, 450 385, 530 410 Z"
-            fill="url(#bottomHandSkin)"
-            stroke="#3B4252"
-            strokeWidth="2"
-          />
-
-          {/* Detailed Thumb (Curving upward) */}
-          <path
-            d="M 305 408 C 280 390, 260 365, 265 340 C 275 330, 295 335, 310 352 C 320 365, 325 385, 305 408 Z"
-            fill="url(#bottomHandSkin)"
-            stroke="#4C566A"
-            strokeWidth="1.5"
-          />
-
-          {/* Index Finger (Extending left under heart) */}
-          <path
-            d="M 220 385 C 180 382, 140 368, 112 342 C 118 332, 135 328, 165 340 C 200 352, 230 364, 250 370"
-            fill="none"
-            stroke="url(#bottomFingerHighlight)"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-
-          {/* Middle Finger */}
-          <path
-            d="M 230 375 C 190 370, 150 355, 122 328 C 130 320, 145 318, 175 330 C 210 344, 240 356, 260 362"
-            fill="none"
-            stroke="#D8DEE9"
-            strokeWidth="2"
-            strokeOpacity="0.4"
-            strokeLinecap="round"
-          />
-
-          {/* Ring & Pinky Contour Details */}
-          <path
-            d="M 245 365 C 210 358, 170 342, 145 315 C 152 310, 165 310, 190 322"
-            fill="none"
-            stroke="#D8DEE9"
-            strokeWidth="1.5"
-            strokeOpacity="0.25"
-            strokeLinecap="round"
+            className="animate-ecg-stream"
           />
         </g>
       </svg>
