@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { LiquidEther } from "@/components/LiquidEther";
+import { CaringHandsEmblem } from "@/components/CaringHandsEmblem";
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<{
@@ -35,41 +36,6 @@ export default function Home() {
           resolution={0.5}
           BFECC={true}
         />
-      </div>
-
-      {/* Subtle Trust Motion Background Animation (Hands coming together SVG/CSS) */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-10 z-0">
-        <svg
-          className="w-[600px] h-[600px] animate-pulse text-[#E63946]"
-          viewBox="0 0 200 200"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <style>{`
-            @keyframes gentleHold {
-              0%, 100% { transform: translateY(0px) scale(1); }
-              50% { transform: translateY(-8px) scale(1.03); }
-            }
-            .trust-hands { animation: gentleHold 5s ease-in-out infinite; transform-origin: center; }
-          `}</style>
-          <g className="trust-hands">
-            {/* Left Care Hand */}
-            <path
-              d="M40 110 C 60 90, 85 95, 100 110 C 95 125, 75 130, 45 120 Z"
-              fill="currentColor"
-            />
-            {/* Right Support Hand */}
-            <path
-              d="M160 110 C 140 90, 115 95, 100 110 C 105 125, 125 130, 155 120 Z"
-              fill="currentColor"
-            />
-            {/* Center Heart Emblem */}
-            <path
-              d="M100 95 C 95 85, 80 85, 80 97 C 80 105, 100 120, 100 120 C 100 120, 120 105, 120 97 C 120 85, 105 85, 100 95 Z"
-              fill="#E63946"
-            />
-          </g>
-        </svg>
       </div>
 
       {/* Header */}
@@ -112,24 +78,29 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <main className="relative z-10 max-w-4xl mx-auto px-6 py-16 text-center my-auto">
-        <span className="inline-block px-3 py-1 bg-white/80 backdrop-blur-xs text-[#E63946] text-xs font-semibold rounded-full border border-red-100 shadow-2xs mb-6">
+      <main className="relative z-10 max-w-4xl mx-auto px-6 py-10 text-center my-auto">
+        <span className="inline-block px-3.5 py-1 bg-white/85 backdrop-blur-xs text-[#E63946] text-xs font-semibold rounded-full border border-red-100 shadow-2xs mb-4">
           Real-Time Smart OPD & Emergency Healthcare
         </span>
+
+        {/* Featured Caring Hands & Heartbeat Emblem (Inspired by Reference Image) */}
+        <div className="w-52 h-52 sm:w-64 sm:h-64 mx-auto -my-2 flex items-center justify-center">
+          <CaringHandsEmblem />
+        </div>
 
         <h2 className="text-4xl sm:text-5xl font-extrabold text-zinc-900 tracking-tight leading-tight">
           Connected Care. <br />
           <span className="text-[#E63946]">Better Health.</span>
         </h2>
 
-        <p className="mt-6 text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed font-medium">
+        <p className="mt-4 text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed font-medium">
           CareSync connects patients directly with live doctor OPD queues and
           emergency bed availability across hospitals in real time — reducing
           wait times and saving lives.
         </p>
 
         {/* CTA Buttons */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/signup?role=patient"
             className="w-full sm:w-auto px-8 py-3.5 bg-[#E63946] hover:bg-[#d62837] text-white font-medium text-sm rounded-xl transition-all shadow-sm hover:shadow-md text-center"
@@ -145,7 +116,7 @@ export default function Home() {
         </div>
 
         {/* Trust Badges */}
-        <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left max-w-3xl mx-auto">
+        <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left max-w-3xl mx-auto">
           <div className="bg-white/85 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
             <h3 className="font-bold text-zinc-900 text-sm mb-1">
               Live Token Tracking
