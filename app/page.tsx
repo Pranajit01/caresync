@@ -25,20 +25,20 @@ export default function Home() {
   return (
     <div className="relative min-h-screen flex flex-col justify-between bg-zinc-50 overflow-hidden font-sans">
       {/* LiquidEther Interactive Fluid Simulation Background */}
-      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+      <div className="absolute inset-0 z-0 opacity-45 pointer-events-none">
         <LiquidEther
           colors={['#E63946', '#2A9D8F', '#1D3557']}
-          mouseForce={22}
-          cursorSize={110}
+          mouseForce={28}
+          cursorSize={130}
           autoDemo={true}
-          autoSpeed={0.5}
-          autoIntensity={2.0}
+          autoSpeed={0.7}
+          autoIntensity={2.5}
           resolution={0.5}
           BFECC={true}
         />
       </div>
 
-      {/* Real Photo Human Connecting Hands Backdrop Layer */}
+      {/* Real Transparent Photo Human Connecting Hands Backdrop Layer */}
       <CaringHandsEmblem />
 
       {/* Header (Z-Index 30 ensures CareSync logo and nav buttons are 100% crisp and visible) */}

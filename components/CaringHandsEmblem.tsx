@@ -5,73 +5,73 @@ import React from "react";
 /**
  * CaringHandsEmblem Component
  *
- * Features real photo-realistic human hands (matching Nokia connecting hands reference photo):
+ * Real photo-realistic human hand cutouts (100% transparent background):
  * - Top-Left Hand: Reaches in smoothly from the top-left corner of the browser window.
  * - Bottom-Right Hand: Reaches in smoothly from the bottom-right corner of the browser window.
- * - Center Emblem: Glowing healthcare heart with an animated teal ECG heartbeat line.
+ * - Center Emblem: Enhanced glowing healthcare heart with an animated teal ECG heartbeat line.
  *
- * Uses mix-blend-multiply and z-indexing to ensure 100% text readability for all header and hero text.
+ * Positioned in backdrop layers to ensure 100% text readability for all header and hero text.
  */
 export function CaringHandsEmblem() {
   return (
     <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
       <style>{`
-        @keyframes realTopHandSlide {
+        @keyframes handTopSlideIn {
           0% {
-            transform: translate(-25vw, -25vh) rotate(-15deg);
+            transform: translate(-30vw, -30vh) rotate(-18deg);
             opacity: 0;
           }
           70% {
             transform: translate(1vw, 1vh) rotate(2deg);
-            opacity: 0.9;
+            opacity: 1;
           }
           100% {
             transform: translate(0, 0) rotate(0deg);
-            opacity: 0.85;
+            opacity: 0.95;
           }
         }
 
-        @keyframes realBottomHandSlide {
+        @keyframes handBottomSlideIn {
           0% {
-            transform: translate(25vw, 25vh) rotate(15deg);
+            transform: translate(30vw, 30vh) rotate(18deg);
             opacity: 0;
           }
           70% {
             transform: translate(-1vw, -1vh) rotate(-2deg);
-            opacity: 0.9;
+            opacity: 1;
           }
           100% {
             transform: translate(0, 0) rotate(0deg);
-            opacity: 0.85;
+            opacity: 0.95;
           }
         }
 
-        @keyframes heartPulseIgnite {
+        @keyframes centerHeartIgnite {
           0% {
             transform: scale(0.5);
             opacity: 0;
             filter: drop-shadow(0 0 5px rgba(230, 57, 70, 0.2));
           }
           60% {
-            transform: scale(1.1);
+            transform: scale(1.15);
             opacity: 1;
-            filter: drop-shadow(0 0 35px rgba(230, 57, 70, 0.9)) drop-shadow(0 0 60px rgba(42, 157, 143, 0.6));
+            filter: drop-shadow(0 0 40px rgba(230, 57, 70, 0.95)) drop-shadow(0 0 70px rgba(42, 157, 143, 0.7));
           }
           100% {
             transform: scale(1);
             opacity: 1;
-            filter: drop-shadow(0 0 20px rgba(230, 57, 70, 0.6)) drop-shadow(0 0 35px rgba(42, 157, 143, 0.4));
+            filter: drop-shadow(0 0 25px rgba(230, 57, 70, 0.7)) drop-shadow(0 0 45px rgba(42, 157, 143, 0.45));
           }
         }
 
-        @keyframes heartContinuousGlow {
+        @keyframes heartPulseContinuous {
           0%, 100% {
             transform: scale(1);
-            filter: drop-shadow(0 0 18px rgba(230, 57, 70, 0.5)) drop-shadow(0 0 35px rgba(42, 157, 143, 0.3));
+            filter: drop-shadow(0 0 20px rgba(230, 57, 70, 0.6)) drop-shadow(0 0 40px rgba(42, 157, 143, 0.4));
           }
           50% {
-            transform: scale(1.05);
-            filter: drop-shadow(0 0 30px rgba(230, 57, 70, 0.8)) drop-shadow(0 0 55px rgba(42, 157, 143, 0.55));
+            transform: scale(1.06);
+            filter: drop-shadow(0 0 35px rgba(230, 57, 70, 0.9)) drop-shadow(0 0 65px rgba(42, 157, 143, 0.65));
           }
         }
 
@@ -80,17 +80,17 @@ export function CaringHandsEmblem() {
           100% { stroke-dashoffset: -400; }
         }
 
-        .animate-real-top-hand {
-          animation: realTopHandSlide 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-top-hand-transparent {
+          animation: handTopSlideIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .animate-real-bottom-hand {
-          animation: realBottomHandSlide 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-bottom-hand-transparent {
+          animation: handBottomSlideIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .animate-heart-glow {
-          animation: heartPulseIgnite 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s forwards,
-                     heartContinuousGlow 3.2s ease-in-out infinite 2s;
+        .animate-heart-ignite-glow {
+          animation: centerHeartIgnite 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s forwards,
+                     heartPulseContinuous 3.2s ease-in-out infinite 2s;
         }
 
         .animate-ecg-stream {
@@ -99,29 +99,29 @@ export function CaringHandsEmblem() {
         }
       `}</style>
 
-      {/* Real Human Top-Left Hand (Positioned safely outside text boundaries) */}
-      <div className="absolute top-0 left-0 w-72 sm:w-96 md:w-[480px] aspect-square animate-real-top-hand mix-blend-multiply opacity-85 pointer-events-none">
+      {/* Real Transparent Top-Left Human Hand */}
+      <div className="absolute top-0 left-0 w-80 sm:w-[420px] md:w-[540px] aspect-square animate-top-hand-transparent pointer-events-none">
         <img
           src="/images/nokia_top_hand.png"
           alt="Connecting Human Hand Top"
-          className="w-full h-full object-contain filter drop-shadow-md"
+          className="w-full h-full object-contain filter drop-shadow-xl"
         />
       </div>
 
-      {/* Real Human Bottom-Right Hand (Positioned safely outside text boundaries) */}
-      <div className="absolute bottom-0 right-0 w-72 sm:w-96 md:w-[480px] aspect-square animate-real-bottom-hand mix-blend-multiply opacity-85 pointer-events-none">
+      {/* Real Transparent Bottom-Right Human Hand */}
+      <div className="absolute bottom-0 right-0 w-80 sm:w-[420px] md:w-[540px] aspect-square animate-bottom-hand-transparent pointer-events-none">
         <img
           src="/images/nokia_bottom_hand.png"
           alt="Connecting Human Hand Bottom"
-          className="w-full h-full object-contain filter drop-shadow-md"
+          className="w-full h-full object-contain filter drop-shadow-xl"
         />
       </div>
 
-      {/* Center Heart Emblem with Animated ECG Stream (Rendered gently behind text) */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-44 sm:w-56 sm:h-56 pointer-events-none opacity-90">
+      {/* Center Healthcare Heart Emblem with Animated ECG Stream */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-60 sm:h-60 pointer-events-none opacity-95">
         <svg
           viewBox="0 0 400 400"
-          className="w-full h-full animate-heart-glow overflow-visible"
+          className="w-full h-full animate-heart-ignite-glow overflow-visible"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -134,6 +134,9 @@ export function CaringHandsEmblem() {
             </radialGradient>
           </defs>
 
+          {/* Ambient Glow Disk */}
+          <circle cx="200" cy="200" r="140" fill="#E63946" fillOpacity="0.2" className="blur-2xl" />
+
           {/* Heart Emblem */}
           <path
             d="M 200 270
@@ -143,7 +146,7 @@ export function CaringHandsEmblem() {
                C 295 175, 270 220, 200 270 Z"
             fill="url(#realHeartGrad)"
             stroke="#FFFFFF"
-            strokeWidth="3"
+            strokeWidth="3.5"
             strokeLinejoin="round"
           />
 
@@ -152,7 +155,7 @@ export function CaringHandsEmblem() {
             d="M 115 190 L 160 190 L 170 155 L 183 220 L 201 140 L 215 205 L 225 190 L 285 190"
             fill="none"
             stroke="#1D3557"
-            strokeWidth="4"
+            strokeWidth="4.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -162,7 +165,7 @@ export function CaringHandsEmblem() {
             d="M 115 190 L 160 190 L 170 155 L 183 220 L 201 140 L 215 205 L 225 190 L 285 190"
             fill="none"
             stroke="#2A9D8F"
-            strokeWidth="4"
+            strokeWidth="4.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             className="animate-ecg-stream"
