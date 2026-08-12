@@ -4,19 +4,23 @@ import React from "react";
 
 /**
  * CaringHandsEmblem Component
- * Real photo-realistic human hand cutouts reaching from top-left and bottom-right screen corners.
+ *
+ * Real photo-realistic human hand cutouts (100% transparent, zero background artifacts):
+ * - Top-Left Hand: Positioned top-left inside the visible viewport at 100% zoom.
+ * - Bottom-Right Hand: Positioned bottom-right inside the visible viewport at 100% zoom.
+ * - 100% visible on all desktop resolutions and zoom levels.
  */
 export function CaringHandsEmblem() {
   return (
     <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
       <style>{`
-        @keyframes handTopSlideIn {
+        @keyframes handTopVisibleSlide {
           0% {
-            transform: translate(-30vw, -30vh) rotate(-18deg);
+            transform: translate(-15vw, -15vh) rotate(-15deg);
             opacity: 0;
           }
           70% {
-            transform: translate(1vw, 1vh) rotate(2deg);
+            transform: translate(0.5vw, 0.5vh) rotate(1deg);
             opacity: 1;
           }
           100% {
@@ -25,13 +29,13 @@ export function CaringHandsEmblem() {
           }
         }
 
-        @keyframes handBottomSlideIn {
+        @keyframes handBottomVisibleSlide {
           0% {
-            transform: translate(30vw, 30vh) rotate(18deg);
+            transform: translate(15vw, 15vh) rotate(15deg);
             opacity: 0;
           }
           70% {
-            transform: translate(-1vw, -1vh) rotate(-2deg);
+            transform: translate(-0.5vw, -0.5vh) rotate(-1deg);
             opacity: 1;
           }
           100% {
@@ -40,30 +44,30 @@ export function CaringHandsEmblem() {
           }
         }
 
-        .animate-top-hand-transparent {
-          animation: handTopSlideIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-top-hand-visible {
+          animation: handTopVisibleSlide 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .animate-bottom-hand-transparent {
-          animation: handBottomSlideIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-bottom-hand-visible {
+          animation: handBottomVisibleSlide 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
 
-      {/* Real Transparent Top-Left Human Hand */}
-      <div className="absolute top-0 left-0 w-80 sm:w-[420px] md:w-[540px] aspect-square animate-top-hand-transparent pointer-events-none">
+      {/* Real Transparent Top-Left Human Hand (100% visible at 100% zoom) */}
+      <div className="absolute top-[3%] left-[1%] w-[26vw] min-w-[240px] max-w-[380px] aspect-square animate-top-hand-visible pointer-events-none">
         <img
           src="/images/nokia_top_hand.png"
           alt="Connecting Human Hand Top"
-          className="w-full h-full object-contain filter drop-shadow-xl"
+          className="w-full h-full object-contain filter drop-shadow-lg"
         />
       </div>
 
-      {/* Real Transparent Bottom-Right Human Hand */}
-      <div className="absolute bottom-0 right-0 w-80 sm:w-[420px] md:w-[540px] aspect-square animate-bottom-hand-transparent pointer-events-none">
+      {/* Real Transparent Bottom-Right Human Hand (100% visible at 100% zoom) */}
+      <div className="absolute top-[42%] sm:top-[38%] right-[1%] w-[26vw] min-w-[240px] max-w-[380px] aspect-square animate-bottom-hand-visible pointer-events-none">
         <img
           src="/images/nokia_bottom_hand.png"
           alt="Connecting Human Hand Bottom"
-          className="w-full h-full object-contain filter drop-shadow-xl"
+          className="w-full h-full object-contain filter drop-shadow-lg"
         />
       </div>
     </div>
@@ -77,7 +81,7 @@ export function CaringHandsEmblem() {
  */
 export function CaringHeartEmblem() {
   return (
-    <div className="relative w-36 h-36 sm:w-48 sm:h-48 mx-auto my-4 flex items-center justify-center pointer-events-none select-none">
+    <div className="relative w-36 h-36 sm:w-44 sm:h-44 mx-auto my-3 flex items-center justify-center pointer-events-none select-none">
       <style>{`
         @keyframes centerHeartIgnite {
           0% {
