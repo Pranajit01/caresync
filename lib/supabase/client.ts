@@ -1,14 +1,24 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
 /**
- * Browser-side (public) Supabase client.
- * Uses NEXT_PUBLIC_* env vars — safe to expose to the browser.
- * Safe fallback placeholder URL used if env vars are not set yet in .env.local.
+ * Browser-side Supabase client using @supabase/ssr.
+ * This correctly handles cookie-based session persistence for the
+ * Next.js App Router (client components, hooks, etc.).
+ *
+ * Call this function inside client components — do NOT call at module level.
  */
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-const supabaseAnonKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+/**
+ * Singleton instance for use in non-component files (lib/auth.ts, etc.)
+ * where we know we're always in a browser context.
+ */
+export const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
