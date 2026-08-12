@@ -9,8 +9,11 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackError = searchParams.get("error");
+  const registered = searchParams.get("registered");
+  const initialEmail = searchParams.get("email") || "";
+  const initialRole = searchParams.get("role") || "";
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(
     callbackError === "auth_callback_failed"
@@ -28,7 +31,7 @@ function LoginForm() {
       const data = await signInUser({ email, password });
 
       if (data.user) {
-        const role = data.user.user_metadata?.role || "patient";
+        const role = data.user.user_metadata?.role || initialRole || "patient";
         if (role === "hospital_admin" || role === "super_admin") {
           router.push("/admin/dashboard");
         } else {
@@ -43,7 +46,7 @@ function LoginForm() {
           setError("Incorrect email or password. Please try again.");
         } else if (msg.includes("Email not confirmed")) {
           setError(
-            "Please check your email and click the confirmation link before logging in."
+            "Account registered! Please click the confirmation link in your email to log in."
           );
         } else if (msg.toLowerCase().includes("fetch")) {
           setError(
@@ -73,6 +76,13 @@ function LoginForm() {
           Sign in to access your portal
         </p>
       </div>
+
+      {/* Success alert on registration */}
+      {registered === "true" && (
+        <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-[#2A9D8F] font-medium">
+          Account created successfully! Enter your password to log in.
+        </div>
+      )}
 
       {/* Error Alert */}
       {error && (

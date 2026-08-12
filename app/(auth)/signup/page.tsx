@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signUpUser, UserRole } from "@/lib/auth";
+import { signUpUser, signInUser, UserRole } from "@/lib/auth";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -17,7 +17,6 @@ export default function SignupPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [confirmationSent, setConfirmationSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +24,7 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
+      // 1. Sign up the user with metadata
       const data = await signUpUser({
         email,
         password,
@@ -34,13 +34,31 @@ export default function SignupPage() {
         hospitalId: role === "hospital_admin" ? hospitalId : undefined,
       });
 
+      // 2. Attempt immediate auto-login so the user isn't blocked by email confirmation
+      try {
+        const loginData = await signInUser({ email, password });
+        if (loginData.user) {
+          const targetPath = role === "patient" ? "/patient/dashboard" : "/admin/dashboard";
+          router.push(targetPath);
+          router.refresh();
+          return;
+        }
+      } catch {
+        // If immediate sign-in is pending confirmation, redirect cleanly to login page with prefilled email
+        router.push(
+          `/login?registered=true&email=${encodeURIComponent(email)}&role=${role}`
+        );
+        return;
+      }
+
       if (data.session) {
-        // Email confirmation is disabled in Supabase — user is logged in immediately
-        router.push(role === "patient" ? "/patient/dashboard" : "/admin/dashboard");
+        const targetPath = role === "patient" ? "/patient/dashboard" : "/admin/dashboard";
+        router.push(targetPath);
         router.refresh();
-      } else if (data.user) {
-        // Email confirmation is enabled — show a "check your inbox" message
-        setConfirmationSent(true);
+      } else {
+        router.push(
+          `/login?registered=true&email=${encodeURIComponent(email)}&role=${role}`
+        );
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -61,31 +79,6 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
-
-  // Show confirmation-sent state
-  if (confirmationSent) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-zinc-50 px-4 py-12">
-        <div className="w-full max-w-md bg-white rounded-xl border border-zinc-200 shadow-sm p-8 text-center">
-          <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-7 h-7 text-[#2A9D8F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold text-zinc-900 mb-2">Check your email</h2>
-          <p className="text-sm text-zinc-500 mb-6">
-            We sent a confirmation link to <strong className="text-zinc-700">{email}</strong>. Click the link in the email to activate your account and log in.
-          </p>
-          <Link
-            href="/login"
-            className="inline-block w-full py-2.5 px-4 bg-[#E63946] hover:bg-[#d62837] text-white font-medium text-sm rounded-lg transition-colors text-center"
-          >
-            Go to Login
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-zinc-50 px-4 py-12">
