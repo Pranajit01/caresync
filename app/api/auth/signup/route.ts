@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { supabase } from "@/lib/supabase/client";
 
 export async function POST(request: Request) {
   try {
@@ -20,29 +20,29 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create and auto-confirm user server-side via Supabase Admin API
-    // This bypasses Supabase's email rate limits and SMTP send constraints 100%
-    const { data: newUser, error: createError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true, // Auto-confirm email so no email is sent
-        user_metadata: {
+    // 1. Primary signup attempt via Supabase Auth
+    const { data: signupData, error: signupError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
           full_name: fullName,
           role: role || "patient",
           phone: phone || "",
           hospital_id: hospitalId || null,
         },
-      });
+      },
+    });
 
-    if (createError) {
-      console.error("Admin CreateUser Error:", createError);
+    if (signupError) {
+      const msg = signupError.message;
+      console.error("Signup Auth Error:", signupError);
 
-      // Handle duplicate user error gracefully
+      // Handle duplicate user error
       if (
-        createError.message.includes("already registered") ||
-        createError.message.includes("already been registered") ||
-        createError.status === 422
+        msg.includes("already registered") ||
+        msg.includes("already been registered") ||
+        signupError.status === 422
       ) {
         return NextResponse.json(
           { error: "An account with this email already exists. Please log in instead." },
@@ -50,26 +50,46 @@ export async function POST(request: Request) {
         );
       }
 
+      // Handle rate limit or user not allowed: attempt fallback sign-in
+      if (
+        msg.toLowerCase().includes("rate limit") ||
+        msg.toLowerCase().includes("user not allowed") ||
+        msg.toLowerCase().includes("exceeded")
+      ) {
+        // Try sign in to check if the user account was already registered
+        const { data: loginData, error: loginError } =
+          await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+        if (!loginError && loginData.user) {
+          return NextResponse.json({
+            success: true,
+            user: loginData.user,
+            session: loginData.session,
+          });
+        }
+
+        return NextResponse.json(
+          {
+            error:
+              "Account creation rate limit reached on auth server. Please log in directly if you registered earlier, or wait a few minutes.",
+          },
+          { status: 429 }
+        );
+      }
+
       return NextResponse.json(
-        { error: createError.message || "Failed to create user account." },
+        { error: msg || "Failed to create user account." },
         { status: 400 }
       );
     }
 
-    // Also sync to public.users table if required by RLS triggers
-    if (newUser?.user) {
-      await supabaseAdmin.from("users").upsert({
-        id: newUser.user.id,
-        full_name: fullName,
-        role: role || "patient",
-        phone: phone || "",
-        hospital_id: hospitalId || null,
-      });
-    }
-
     return NextResponse.json({
       success: true,
-      user: newUser.user,
+      user: signupData.user,
+      session: signupData.session,
     });
   } catch (err: any) {
     console.error("Signup route exception:", err);
