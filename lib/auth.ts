@@ -18,10 +18,6 @@ export interface SignInParams {
 
 /**
  * Sign up a new user with Supabase Auth storing metadata (role, full_name, etc.)
- *
- * Note: If Supabase email confirmation is enabled, the user will receive an
- * email and data.session will be null until they confirm. For MVP, disable
- * "Confirm email" in Supabase Dashboard → Authentication → Providers → Email.
  */
 export async function signUpUser({
   email,
@@ -31,6 +27,11 @@ export async function signUpUser({
   phone = "",
   hospitalId = "",
 }: SignUpParams) {
+  const origin =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_APP_URL || "https://caresync.vercel.app";
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -41,8 +42,7 @@ export async function signUpUser({
         phone: phone,
         hospital_id: hospitalId || null,
       },
-      // Redirect back to the app after email confirmation
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
+      emailRedirectTo: `${origin}/auth/callback`,
     },
   });
 
@@ -55,8 +55,6 @@ export async function signUpUser({
 
 /**
  * Sign in existing user using email + password.
- * Uses cookie-based sessions via @supabase/ssr — session persists across
- * page navigations and server requests.
  */
 export async function signInUser({ email, password }: SignInParams) {
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -72,7 +70,7 @@ export async function signInUser({ email, password }: SignInParams) {
 }
 
 /**
- * Sign out current user and clear the session cookie.
+ * Sign out current user and clear session.
  */
 export async function signOutUser() {
   const { error } = await supabase.auth.signOut();
@@ -82,8 +80,7 @@ export async function signOutUser() {
 }
 
 /**
- * Get current authenticated user session and role from user_metadata.
- * Uses getUser() (not getSession()) which verifies the token server-side.
+ * Get current authenticated user session and role.
  */
 export async function getCurrentUser() {
   const {
