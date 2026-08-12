@@ -25,7 +25,7 @@ export default function Home() {
   return (
     <div className="relative min-h-screen flex flex-col justify-between bg-zinc-50 overflow-hidden font-sans">
       {/* LiquidEther Interactive Fluid Simulation Background */}
-      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
         <LiquidEther
           colors={['#E63946', '#2A9D8F', '#1D3557']}
           mouseForce={22}
@@ -38,13 +38,13 @@ export default function Home() {
         />
       </div>
 
-      {/* Full-Screen Viewport Nokia Connecting Hands Overlay */}
+      {/* Real Photo Human Connecting Hands Backdrop Layer */}
       <CaringHandsEmblem />
 
-      {/* Header */}
-      <header className="relative z-20 max-w-6xl mx-auto w-full px-6 py-6 flex items-center justify-between">
+      {/* Header (Z-Index 30 ensures CareSync logo and nav buttons are 100% crisp and visible) */}
+      <header className="relative z-30 max-w-6xl mx-auto w-full px-6 py-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 drop-shadow-2xs">
             Care<span className="text-[#E63946]">Sync</span>
           </h1>
         </div>
@@ -65,7 +65,7 @@ export default function Home() {
             <>
               <Link
                 href="/login"
-                className="text-sm font-medium text-zinc-700 hover:text-zinc-900 px-3 py-2 rounded-lg transition-colors bg-white/60 backdrop-blur-xs"
+                className="text-sm font-medium text-zinc-700 hover:text-zinc-900 px-3.5 py-2 rounded-lg transition-colors bg-white/80 backdrop-blur-sm border border-zinc-200/80 shadow-2xs"
               >
                 Log In
               </Link>
@@ -80,18 +80,18 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="relative z-20 max-w-4xl mx-auto px-6 py-12 text-center my-auto">
-        <span className="inline-block px-3.5 py-1 bg-white/85 backdrop-blur-xs text-[#E63946] text-xs font-semibold rounded-full border border-red-100 shadow-2xs mb-6">
+      {/* Hero Section (Z-Index 30 ensures headline and tagline text are 100% readable & front-and-center) */}
+      <main className="relative z-30 max-w-4xl mx-auto px-6 py-12 text-center my-auto">
+        <span className="inline-block px-4 py-1.5 bg-white/90 backdrop-blur-sm text-[#E63946] text-xs font-bold rounded-full border border-red-200 shadow-2xs mb-6 tracking-wide">
           Real-Time Smart OPD & Emergency Healthcare
         </span>
 
-        <h2 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 tracking-tight leading-tight">
+        <h2 className="text-4xl sm:text-6xl font-extrabold text-zinc-900 tracking-tight leading-tight drop-shadow-2xs">
           Connected Care. <br />
           <span className="text-[#E63946]">Better Health.</span>
         </h2>
 
-        <p className="mt-6 text-base sm:text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed font-medium">
+        <p className="mt-6 text-base sm:text-lg text-zinc-700 max-w-2xl mx-auto leading-relaxed font-semibold bg-white/40 backdrop-blur-3xs p-3 rounded-2xl border border-white/50 shadow-2xs">
           CareSync connects patients directly with live doctor OPD queues and
           emergency bed availability across hospitals in real time — reducing
           wait times and saving lives.
@@ -101,13 +101,13 @@ export default function Home() {
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/signup?role=patient"
-            className="w-full sm:w-auto px-8 py-3.5 bg-[#E63946] hover:bg-[#d62837] text-white font-medium text-sm rounded-xl transition-all shadow-sm hover:shadow-md text-center"
+            className="w-full sm:w-auto px-8 py-3.5 bg-[#E63946] hover:bg-[#d62837] text-white font-semibold text-sm rounded-xl transition-all shadow-sm hover:shadow-md text-center"
           >
             Patient Portal & Appointment Booking
           </Link>
           <Link
             href="/signup?role=hospital_admin"
-            className="w-full sm:w-auto px-8 py-3.5 bg-white/90 backdrop-blur-xs hover:bg-zinc-100 border border-zinc-300 text-zinc-800 font-medium text-sm rounded-xl transition-all text-center shadow-2xs"
+            className="w-full sm:w-auto px-8 py-3.5 bg-white/95 backdrop-blur-sm hover:bg-zinc-100 border border-zinc-300 text-zinc-800 font-semibold text-sm rounded-xl transition-all text-center shadow-2xs"
           >
             Hospital Staff Portal
           </Link>
@@ -115,27 +115,27 @@ export default function Home() {
 
         {/* Trust Badges */}
         <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left max-w-3xl mx-auto">
-          <div className="bg-white/85 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
+          <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
             <h3 className="font-bold text-zinc-900 text-sm mb-1">
               Live Token Tracking
             </h3>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-600">
               Track your OPD queue status live from anywhere without standing in line.
             </p>
           </div>
-          <div className="bg-white/85 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
+          <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
             <h3 className="font-bold text-zinc-900 text-sm mb-1">
               Emergency Bed Finder
             </h3>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-600">
               Instant visibility into ICU, General, and Emergency bed counts.
             </p>
           </div>
-          <div className="bg-white/85 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
+          <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl border border-zinc-200/80 shadow-xs">
             <h3 className="font-bold text-zinc-900 text-sm mb-1">
               Hospital Admin Hub
             </h3>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-600">
               One-tap doctor consultation queue management & bed updates.
             </p>
           </div>
@@ -143,7 +143,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-20 border-t border-zinc-200/80 bg-white/80 backdrop-blur-xs py-6 text-center text-xs text-zinc-500">
+      <footer className="relative z-30 border-t border-zinc-200/80 bg-white/90 backdrop-blur-xs py-6 text-center text-xs text-zinc-500 font-medium">
         CareSync Platform — MVP Built for Google Antigravity
       </footer>
     </div>
