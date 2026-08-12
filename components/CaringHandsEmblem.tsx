@@ -45,8 +45,8 @@ export function CaringHandsEmblem() {
         }
       `}</style>
 
-      {/* Top-Left Human Hand */}
-      <div className="absolute top-12 left-0 sm:top-2 sm:left-0 w-32 sm:w-[26vw] sm:min-w-[200px] sm:max-w-[360px] aspect-square animate-top-hand-fast pointer-events-none">
+      {/* Top-Left Human Hand (Sized larger: 420px - 480px) */}
+      <div className="absolute top-8 left-0 sm:top-0 sm:left-0 w-44 sm:w-[32vw] sm:min-w-[260px] sm:max-w-[460px] aspect-square animate-top-hand-fast pointer-events-none">
         <img
           src="/images/nokia_top_hand.png"
           alt="Connecting Human Hand Top Left"
@@ -54,8 +54,8 @@ export function CaringHandsEmblem() {
         />
       </div>
 
-      {/* Bottom-Right Human Hand (Positioned at bottom-right pointing up-left as indicated by user red arrow!) */}
-      <div className="absolute top-64 right-0 sm:top-auto sm:bottom-0 sm:right-0 w-32 sm:w-[26vw] sm:min-w-[200px] sm:max-w-[360px] aspect-square animate-bottom-hand-fast pointer-events-none">
+      {/* Bottom-Right Human Hand (Sized larger: 420px - 480px) */}
+      <div className="absolute top-64 right-0 sm:top-auto sm:bottom-0 sm:right-0 w-44 sm:w-[32vw] sm:min-w-[260px] sm:max-w-[460px] aspect-square animate-bottom-hand-fast pointer-events-none">
         <img
           src="/images/nokia_bottom_hand.png"
           alt="Connecting Human Hand Bottom Right"
