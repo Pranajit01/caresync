@@ -5,237 +5,293 @@ import React from "react";
 /**
  * CaringHandsEmblem Component
  *
- * Inspired by healthcare protection imagery:
- * Features 2 gentle caring hands entering from top and bottom to embrace a glowing
- * heartbeat ECG emblem in the center. Built with 100% GPU-accelerated CSS keyframe
- * animations for 60fps performance without any lag or heavy JavaScript.
+ * Inspired by Nokia's iconic "connecting hands" animation style:
+ * Two detailed hands reach out from top-left and bottom-right to meet in the center,
+ * cupping around a glowing healthcare heart emblem with an animated ECG heartbeat pulse.
+ *
+ * Built with 100% GPU-accelerated CSS keyframe animations for 60fps smoothness.
  */
 export function CaringHandsEmblem() {
   return (
-    <div className="relative w-full max-w-lg mx-auto aspect-square flex items-center justify-center p-4 select-none pointer-events-none">
+    <div className="relative w-full max-w-md mx-auto aspect-square flex items-center justify-center select-none pointer-events-none">
       <style>{`
-        @keyframes handTopEntrance {
+        @keyframes nokiaTopHandConnect {
           0% {
-            transform: translateY(-40px) translateX(-20px) rotate(-6deg);
+            transform: translate(-140px, -90px) rotate(-18deg);
             opacity: 0;
           }
-          60% {
-            transform: translateY(4px) translateX(0px) rotate(1deg);
+          70% {
+            transform: translate(6px, 4px) rotate(2deg);
             opacity: 1;
           }
           100% {
-            transform: translateY(0px) translateX(0px) rotate(0deg);
+            transform: translate(0px, 0px) rotate(0deg);
             opacity: 1;
           }
         }
 
-        @keyframes handBottomEntrance {
+        @keyframes nokiaBottomHandConnect {
           0% {
-            transform: translateY(40px) translateX(20px) rotate(6deg);
+            transform: translate(140px, 90px) rotate(18deg);
             opacity: 0;
           }
-          60% {
-            transform: translateY(-4px) translateX(0px) rotate(-1deg);
+          70% {
+            transform: translate(-6px, -4px) rotate(-2deg);
             opacity: 1;
           }
           100% {
-            transform: translateY(0px) translateX(0px) rotate(0deg);
+            transform: translate(0px, 0px) rotate(0deg);
             opacity: 1;
           }
         }
 
-        @keyframes heartPulseGlow {
+        @keyframes heartIgniteGlow {
+          0% {
+            transform: scale(0.6);
+            opacity: 0;
+            filter: drop-shadow(0 0 5px rgba(230, 57, 70, 0.2));
+          }
+          60% {
+            transform: scale(1.1);
+            opacity: 1;
+            filter: drop-shadow(0 0 30px rgba(230, 57, 70, 0.9)) drop-shadow(0 0 50px rgba(42, 157, 143, 0.6));
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+            filter: drop-shadow(0 0 20px rgba(230, 57, 70, 0.6)) drop-shadow(0 0 35px rgba(42, 157, 143, 0.4));
+          }
+        }
+
+        @keyframes heartContinuousPulse {
           0%, 100% {
-            transform: scale(0.98);
-            filter: drop-shadow(0 0 15px rgba(230, 57, 70, 0.4)) drop-shadow(0 0 35px rgba(42, 157, 143, 0.25));
+            transform: scale(1);
+            filter: drop-shadow(0 0 18px rgba(230, 57, 70, 0.5)) drop-shadow(0 0 35px rgba(42, 157, 143, 0.3));
           }
           50% {
-            transform: scale(1.04);
-            filter: drop-shadow(0 0 25px rgba(230, 57, 70, 0.7)) drop-shadow(0 0 50px rgba(42, 157, 143, 0.5));
+            transform: scale(1.06);
+            filter: drop-shadow(0 0 28px rgba(230, 57, 70, 0.8)) drop-shadow(0 0 55px rgba(42, 157, 143, 0.6));
           }
         }
 
-        @keyframes ecgPulseLine {
+        @keyframes ecgLineFlow {
           0% { stroke-dashoffset: 400; }
-          50% { stroke-dashoffset: 0; }
           100% { stroke-dashoffset: -400; }
         }
 
-        .animate-hand-top {
-          animation: handTopEntrance 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-nokia-top-hand {
+          animation: nokiaTopHandConnect 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          transform-origin: top left;
         }
 
-        .animate-hand-bottom {
-          animation: handBottomEntrance 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-nokia-bottom-hand {
+          animation: nokiaBottomHandConnect 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          transform-origin: bottom right;
         }
 
-        .animate-heart-pulse {
-          animation: heartPulseGlow 3s ease-in-out infinite 0.6s;
+        .animate-heart-ignite {
+          animation: heartIgniteGlow 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s forwards,
+                     heartContinuousPulse 3s ease-in-out infinite 2s;
           transform-origin: center;
         }
 
-        .animate-ecg-line {
+        .animate-ecg-flow {
           stroke-dasharray: 400;
-          animation: ecgPulseLine 2.5s linear infinite;
+          animation: ecgLineFlow 2.2s linear infinite 1.2s;
         }
       `}</style>
 
-      {/* Background Soft Glow Aura */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 via-red-500/15 to-blue-500/10 rounded-full blur-3xl opacity-60 animate-pulse" />
+      {/* Ambient Glow Atmosphere Behind Center */}
+      <div className="absolute inset-0 bg-radial from-red-500/20 via-teal-500/10 to-transparent blur-3xl rounded-full scale-110" />
 
-      {/* Main SVG Container */}
       <svg
-        viewBox="0 0 400 400"
-        className="w-full h-full relative z-10 drop-shadow-2xl"
+        viewBox="0 0 500 500"
+        className="w-full h-full relative z-10 drop-shadow-2xl overflow-visible"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
           {/* Radial Gradient for Glowing Heart Emblem */}
-          <radialGradient id="heartGradient" cx="50%" cy="50%" r="50%">
+          <radialGradient id="heartBodyGrad" cx="50%" cy="40%" r="60%">
             <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="40%" stopColor="#FFF0F2" />
-            <stop offset="100%" stopColor="#E63946" />
+            <stop offset="35%" stopColor="#FFF0F3" />
+            <stop offset="85%" stopColor="#E63946" />
+            <stop offset="100%" stopColor="#C1121F" />
           </radialGradient>
 
-          {/* Linear Gradient for ECG Line */}
-          <linearGradient id="ecgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#1D3557" />
-            <stop offset="50%" stopColor="#2A9D8F" />
-            <stop offset="100%" stopColor="#E63946" />
+          {/* Linear Gradient for Hands (Realistic Tone with Medical Dark Blue Tint) */}
+          <linearGradient id="topHandSkin" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#252A34" />
+            <stop offset="60%" stopColor="#1E222A" />
+            <stop offset="100%" stopColor="#14171D" />
           </linearGradient>
 
-          {/* Top Hand Gradient */}
-          <linearGradient id="topHandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#2A303C" />
-            <stop offset="100%" stopColor="#181C24" />
+          <linearGradient id="bottomHandSkin" x1="100%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#252A34" />
+            <stop offset="60%" stopColor="#1E222A" />
+            <stop offset="100%" stopColor="#14171D" />
           </linearGradient>
 
-          {/* Bottom Hand Gradient */}
-          <linearGradient id="bottomHandGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#2A303C" />
-            <stop offset="100%" stopColor="#181C24" />
+          {/* Highlights for Fingers */}
+          <linearGradient id="topFingerHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#E63946" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.3" />
+          </linearGradient>
+
+          <linearGradient id="bottomFingerHighlight" x1="100%" y1="100%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#2A9D8F" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.3" />
           </linearGradient>
         </defs>
 
         {/* ========================================================================= */}
-        {/* CENTER HEART EMBLEM WITH ECG PULSE WAVE */}
+        {/* CENTER GLOWING HEART & ECG PULSE SYMBOL */}
         {/* ========================================================================= */}
-        <g className="animate-heart-pulse">
-          {/* Outer Glow Ring */}
-          <circle
-            cx="200"
-            cy="200"
-            r="85"
-            fill="none"
-            stroke="url(#ecgGradient)"
-            strokeWidth="1.5"
-            strokeOpacity="0.4"
-            className="animate-spin"
-            style={{ animationDuration: '20s' }}
-          />
-
-          {/* Heart Shape */}
+        <g className="animate-heart-ignite" style={{ opacity: 0 }}>
+          {/* Heart Emblem Path */}
           <path
-            d="M 200 255
-               C 135 210, 115 170, 135 140
-               C 155 110, 190 125, 200 145
-               C 210 125, 245 110, 265 140
-               C 285 170, 265 210, 200 255 Z"
-            fill="url(#heartGradient)"
+            d="M 250 320
+               C 165 260, 135 205, 160 165
+               C 185 125, 235 140, 250 170
+               C 265 140, 315 125, 340 165
+               C 365 205, 335 260, 250 320 Z"
+            fill="url(#heartBodyGrad)"
             stroke="#FFFFFF"
-            strokeWidth="3"
+            strokeWidth="3.5"
+            strokeLinejoin="round"
           />
 
-          {/* Heartbeat ECG Line across Heart */}
+          {/* Base ECG Line */}
           <path
-            d="M 125 190 L 165 190 L 175 160 L 188 220 L 202 145 L 214 205 L 222 190 L 275 190"
+            d="M 150 230 L 205 230 L 218 190 L 234 270 L 252 175 L 268 250 L 278 230 L 350 230"
             fill="none"
             stroke="#1D3557"
-            strokeWidth="4"
+            strokeWidth="5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
 
-          {/* Animated ECG Pulse Wave Overlay */}
+          {/* Animated Cyan/Teal Pulse Wave Line */}
           <path
-            d="M 125 190 L 165 190 L 175 160 L 188 220 L 202 145 L 214 205 L 222 190 L 275 190"
+            d="M 150 230 L 205 230 L 218 190 L 234 270 L 252 175 L 268 250 L 278 230 L 350 230"
             fill="none"
             stroke="#2A9D8F"
-            strokeWidth="4"
+            strokeWidth="5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="animate-ecg-line"
+            className="animate-ecg-flow"
           />
         </g>
 
         {/* ========================================================================= */}
-        {/* TOP CARING HAND (Cupped downward from top-left) */}
+        {/* TOP-LEFT HAND (Reaching in from top-left, cupping downwards over heart) */}
         {/* ========================================================================= */}
-        <g className="animate-hand-top">
-          {/* Main Hand Wrist & Palm Shadow */}
+        <g className="animate-nokia-top-hand">
+          {/* Forearm & Wrist extending offscreen top-left */}
           <path
-            d="M 20 80
-               C 60 70, 110 50, 170 50
-               C 230 50, 290 75, 330 110
-               C 310 120, 280 125, 250 120
-               C 200 112, 150 100, 100 105
-               C 60 110, 35 105, 20 80 Z"
-            fill="url(#topHandGrad)"
-            stroke="#3A4252"
+            d="M -30 20
+               C 30 20, 90 40, 150 70
+               C 195 92, 235 110, 280 115
+               C 320 120, 360 135, 385 160
+               C 365 175, 340 178, 300 168
+               C 255 156, 210 142, 160 135
+               C 110 128, 50 115, -30 90 Z"
+            fill="url(#topHandSkin)"
+            stroke="#3B4252"
+            strokeWidth="2"
+          />
+
+          {/* Detailed Thumb (Curving gently inward) */}
+          <path
+            d="M 195 92 C 220 110, 240 135, 235 160 C 225 170, 205 165, 190 148 C 180 135, 175 115, 195 92 Z"
+            fill="url(#topHandSkin)"
+            stroke="#4C566A"
             strokeWidth="1.5"
           />
-          {/* Top Hand Fingers Curling Over Heart */}
+
+          {/* Index Finger (Extending right above heart) */}
           <path
-            d="M 170 50 C 220 50, 280 75, 330 110 C 320 125, 295 125, 260 112 C 215 95, 175 92, 140 100"
+            d="M 280 115 C 320 118, 360 132, 388 158 C 382 168, 365 172, 335 160 C 300 148, 270 136, 250 130"
             fill="none"
-            stroke="#E63946"
-            strokeWidth="2"
-            strokeOpacity="0.8"
+            stroke="url(#topFingerHighlight)"
+            strokeWidth="3"
+            strokeLinecap="round"
           />
-          {/* Gentle Highlight Contour Line */}
+
+          {/* Middle Finger */}
           <path
-            d="M 40 85 C 90 70, 160 58, 240 68 C 280 74, 310 92, 325 105"
+            d="M 270 125 C 310 130, 350 145, 378 172 C 370 180, 355 182, 325 170 C 290 156, 260 144, 240 138"
             fill="none"
-            stroke="#FFFFFF"
+            stroke="#D8DEE9"
+            strokeWidth="2"
+            strokeOpacity="0.4"
+            strokeLinecap="round"
+          />
+
+          {/* Ring & Pinky Contour Details */}
+          <path
+            d="M 255 135 C 290 142, 330 158, 355 185 C 348 190, 335 190, 310 178"
+            fill="none"
+            stroke="#D8DEE9"
             strokeWidth="1.5"
             strokeOpacity="0.25"
-            strokeDasharray="4 4"
+            strokeLinecap="round"
           />
         </g>
 
         {/* ========================================================================= */}
-        {/* BOTTOM SUPPORT HAND (Cupped upward from bottom-right) */}
+        {/* BOTTOM-RIGHT HAND (Reaching in from bottom-right, cupping upwards under heart) */}
         {/* ========================================================================= */}
-        <g className="animate-hand-bottom">
-          {/* Main Hand Wrist & Palm Base */}
+        <g className="animate-nokia-bottom-hand">
+          {/* Forearm & Wrist extending offscreen bottom-right */}
           <path
-            d="M 380 320
-               C 340 330, 290 350, 230 350
-               C 170 350, 110 325, 70 290
-               C 90 280, 120 275, 150 280
-               C 200 288, 250 300, 300 295
-               C 340 290, 365 295, 380 320 Z"
-            fill="url(#bottomHandGrad)"
-            stroke="#3A4252"
+            d="M 530 480
+               C 470 480, 410 460, 350 430
+               C 305 408, 265 390, 220 385
+               C 180 380, 140 365, 115 340
+               C 135 325, 160 322, 200 332
+               C 245 344, 290 358, 340 365
+               C 390 372, 450 385, 530 410 Z"
+            fill="url(#bottomHandSkin)"
+            stroke="#3B4252"
+            strokeWidth="2"
+          />
+
+          {/* Detailed Thumb (Curving upward) */}
+          <path
+            d="M 305 408 C 280 390, 260 365, 265 340 C 275 330, 295 335, 310 352 C 320 365, 325 385, 305 408 Z"
+            fill="url(#bottomHandSkin)"
+            stroke="#4C566A"
             strokeWidth="1.5"
           />
-          {/* Bottom Hand Fingers Supporting Heart */}
+
+          {/* Index Finger (Extending left under heart) */}
           <path
-            d="M 230 350 C 180 350, 120 325, 70 290 C 80 275, 105 275, 140 288 C 185 305, 225 308, 260 300"
+            d="M 220 385 C 180 382, 140 368, 112 342 C 118 332, 135 328, 165 340 C 200 352, 230 364, 250 370"
             fill="none"
-            stroke="#2A9D8F"
-            strokeWidth="2"
-            strokeOpacity="0.8"
+            stroke="url(#bottomFingerHighlight)"
+            strokeWidth="3"
+            strokeLinecap="round"
           />
-          {/* Gentle Highlight Contour Line */}
+
+          {/* Middle Finger */}
           <path
-            d="M 360 315 C 310 330, 240 342, 160 332 C 120 326, 90 308, 75 295"
+            d="M 230 375 C 190 370, 150 355, 122 328 C 130 320, 145 318, 175 330 C 210 344, 240 356, 260 362"
             fill="none"
-            stroke="#FFFFFF"
+            stroke="#D8DEE9"
+            strokeWidth="2"
+            strokeOpacity="0.4"
+            strokeLinecap="round"
+          />
+
+          {/* Ring & Pinky Contour Details */}
+          <path
+            d="M 245 365 C 210 358, 170 342, 145 315 C 152 310, 165 310, 190 322"
+            fill="none"
+            stroke="#D8DEE9"
             strokeWidth="1.5"
             strokeOpacity="0.25"
-            strokeDasharray="4 4"
+            strokeLinecap="round"
           />
         </g>
       </svg>
