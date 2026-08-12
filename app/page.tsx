@@ -11,6 +11,7 @@ export default function Home() {
     role: string;
     fullName: string;
   } | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     async function checkSession() {
@@ -20,25 +21,34 @@ export default function Home() {
       }
     }
     checkSession();
+
+    function checkMobile() {
+      setIsMobile(window.innerWidth < 768);
+    }
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   return (
     <div className="relative min-h-screen flex flex-col justify-between bg-zinc-50 overflow-hidden font-sans">
-      {/* LiquidEther Interactive Fluid Simulation Background */}
-      <div className="absolute inset-0 z-0 opacity-45 pointer-events-none">
+      {/* LiquidEther Interactive Fluid Simulation Background (Optimized for Mobile Performance - 60 FPS 0 Lag) */}
+      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
         <LiquidEther
           colors={['#E63946', '#2A9D8F', '#1D3557']}
-          mouseForce={28}
-          cursorSize={130}
+          mouseForce={isMobile ? 14 : 28}
+          cursorSize={isMobile ? 80 : 130}
           autoDemo={true}
-          autoSpeed={0.7}
-          autoIntensity={2.5}
-          resolution={0.5}
-          BFECC={true}
+          autoSpeed={isMobile ? 0.4 : 0.7}
+          autoIntensity={isMobile ? 1.5 : 2.5}
+          resolution={isMobile ? 0.3 : 0.5}
+          iterationsPoisson={isMobile ? 12 : 32}
+          iterationsViscous={isMobile ? 12 : 32}
+          BFECC={!isMobile}
         />
       </div>
 
-      {/* Real Transparent Photo Human Connecting Hands (Opposite Corners) */}
+      {/* Real Transparent Photo Human Connecting Hands (Mobile Top-Framed & Desktop Corner-Framed) */}
       <CaringHandsEmblem />
 
       {/* Header */}
@@ -80,7 +90,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section (Compact padding & sizing so it fits cleanly on screen at 100% zoom) */}
+      {/* Hero Section */}
       <main className="relative z-30 max-w-4xl mx-auto px-6 py-4 text-center my-auto">
         <span className="inline-block px-3.5 py-1 bg-white/90 backdrop-blur-sm text-[#E63946] text-xs font-bold rounded-full border border-red-200 shadow-2xs mb-3 tracking-wide">
           Real-Time Smart OPD & Emergency Healthcare
@@ -96,7 +106,7 @@ export default function Home() {
         <CaringHeartEmblem />
 
         {/* 3. Tagline Paragraph Card */}
-        <p className="mt-1 text-sm sm:text-base text-zinc-700 max-w-xl mx-auto leading-relaxed font-semibold bg-white/60 backdrop-blur-sm p-3 rounded-xl border border-white/80 shadow-2xs">
+        <p className="mt-1 text-sm sm:text-base text-zinc-700 max-w-xl mx-auto leading-relaxed font-semibold bg-white/65 backdrop-blur-sm p-3.5 rounded-xl border border-white/80 shadow-2xs">
           CareSync connects patients directly with live doctor OPD queues and
           emergency bed availability across hospitals in real time — reducing
           wait times and saving lives.

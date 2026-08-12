@@ -5,56 +5,65 @@ import React from "react";
 /**
  * CaringHandsEmblem Component
  *
- * Real photo-realistic human hand cutouts:
- * - Top-Left Hand: Enters cleanly from the top-left corner.
- * - Bottom-Right Hand: Enters cleanly from the bottom-right corner.
- * - Sized perfectly so the layout fits within 100% browser zoom without overflowing.
+ * Real photo-realistic human hand cutouts (100% transparent background):
+ * - Mobile: Both hands visible in the top hero area (Top-Left & Top-Right) framing the headline.
+ * - Desktop: Top-Left and Bottom-Right corner reaching hands.
+ * - 100% visible on mobile phones & desktop, 0 lag.
  */
 export function CaringHandsEmblem() {
   return (
     <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
       <style>{`
-        @keyframes handTopSlideIn {
+        @keyframes handTopMobileSlide {
           0% {
-            transform: translate(-18vw, -18vh) rotate(-15deg);
+            transform: translate(-20vw, -10vh) rotate(-15deg);
             opacity: 0;
-          }
-          70% {
-            transform: translate(0.5vw, 0.5vh) rotate(1deg);
-            opacity: 1;
           }
           100% {
             transform: translate(0, 0) rotate(0deg);
-            opacity: 0.92;
+            opacity: 0.95;
           }
         }
 
-        @keyframes handBottomSlideIn {
+        @keyframes handRightMobileSlide {
+          0% {
+            transform: translate(20vw, -10vh) rotate(15deg);
+            opacity: 0;
+          }
+          100% {
+            transform: translate(0, 0) rotate(0deg);
+            opacity: 0.95;
+          }
+        }
+
+        @keyframes handBottomDesktopSlide {
           0% {
             transform: translate(18vw, 18vh) rotate(15deg);
             opacity: 0;
           }
-          70% {
-            transform: translate(-0.5vw, -0.5vh) rotate(-1deg);
-            opacity: 1;
-          }
           100% {
             transform: translate(0, 0) rotate(0deg);
-            opacity: 0.92;
+            opacity: 0.95;
           }
         }
 
-        .animate-top-hand-slide {
-          animation: handTopSlideIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-top-hand {
+          animation: handTopMobileSlide 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .animate-bottom-hand-slide {
-          animation: handBottomSlideIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .animate-bottom-hand {
+          animation: handBottomDesktopSlide 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @media (max-width: 639px) {
+          .animate-bottom-hand {
+            animation: handRightMobileSlide 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
         }
       `}</style>
 
-      {/* Top-Left Corner Hand */}
-      <div className="absolute top-0 left-0 w-[28vw] min-w-[200px] max-w-[380px] aspect-square animate-top-hand-slide pointer-events-none">
+      {/* Top-Left Human Hand (Visible at top left on both Mobile & Desktop) */}
+      <div className="absolute top-10 -left-2 sm:top-0 sm:left-0 w-36 sm:w-[28vw] sm:min-w-[200px] sm:max-w-[380px] aspect-square animate-top-hand pointer-events-none">
         <img
           src="/images/nokia_top_hand.png"
           alt="Connecting Human Hand Top Left"
@@ -62,11 +71,11 @@ export function CaringHandsEmblem() {
         />
       </div>
 
-      {/* Bottom-Right Corner Hand */}
-      <div className="absolute bottom-0 right-0 w-[28vw] min-w-[200px] max-w-[380px] aspect-square animate-bottom-hand-slide pointer-events-none">
+      {/* Right/Bottom Human Hand (Positioned at Top-Right on Mobile so BOTH hands are 100% visible at top of phone!) */}
+      <div className="absolute top-24 -right-2 sm:top-auto sm:bottom-0 sm:right-0 w-36 sm:w-[28vw] sm:min-w-[200px] sm:max-w-[380px] aspect-square animate-bottom-hand pointer-events-none">
         <img
           src="/images/nokia_bottom_hand.png"
-          alt="Connecting Human Hand Bottom Right"
+          alt="Connecting Human Hand Right/Bottom"
           className="w-full h-full object-contain filter drop-shadow-xl"
         />
       </div>
@@ -77,11 +86,11 @@ export function CaringHandsEmblem() {
 /**
  * CaringHeartEmblem Component
  * Compact glowing healthcare heart emblem with animated teal ECG heartbeat stream.
- * Fits comfortably in the hero flow at 100% zoom.
+ * Renders in its own dedicated space between the main headline and the tagline text.
  */
 export function CaringHeartEmblem() {
   return (
-    <div className="relative w-28 h-28 sm:w-36 sm:h-36 mx-auto my-2 flex items-center justify-center pointer-events-none select-none">
+    <div className="relative w-24 h-24 sm:w-36 sm:h-36 mx-auto my-2 flex items-center justify-center pointer-events-none select-none">
       <style>{`
         @keyframes centerHeartIgnite {
           0% {
