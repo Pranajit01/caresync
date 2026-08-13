@@ -45,21 +45,21 @@ export function CaringHandsEmblem() {
         }
       `}</style>
 
-      {/* Top-Left Human Hand (Sized larger: 420px - 480px) */}
-      <div className="absolute top-8 left-0 sm:top-0 sm:left-0 w-44 sm:w-[32vw] sm:min-w-[260px] sm:max-w-[460px] aspect-square animate-top-hand-fast pointer-events-none">
+      {/* Top-Left Human Hand (Enlarged on Desktop: up to 580px - 640px, cleanly offset in top-left corner on mobile) */}
+      <div className="absolute -top-6 -left-8 sm:top-0 sm:left-0 w-36 xs:w-44 sm:w-[38vw] sm:min-w-[320px] sm:max-w-[580px] xl:max-w-[640px] aspect-square animate-top-hand-fast pointer-events-none z-0">
         <img
           src="/images/nokia_top_hand.png"
           alt="Connecting Human Hand Top Left"
-          className="w-full h-full object-contain filter drop-shadow-xl"
+          className="w-full h-full object-contain filter drop-shadow-xl max-sm:opacity-30 transition-opacity"
         />
       </div>
 
-      {/* Bottom-Right Human Hand (Sized larger: 420px - 480px) */}
-      <div className="absolute top-64 right-0 sm:top-auto sm:bottom-0 sm:right-0 w-44 sm:w-[32vw] sm:min-w-[260px] sm:max-w-[460px] aspect-square animate-bottom-hand-fast pointer-events-none">
+      {/* Bottom-Right Human Hand (Enlarged on Desktop: up to 580px - 640px, cleanly offset in bottom-right corner on mobile) */}
+      <div className="absolute -bottom-6 -right-8 sm:top-auto sm:bottom-0 sm:right-0 w-36 xs:w-44 sm:w-[38vw] sm:min-w-[320px] sm:max-w-[580px] xl:max-w-[640px] aspect-square animate-bottom-hand-fast pointer-events-none z-0">
         <img
           src="/images/nokia_bottom_hand.png"
           alt="Connecting Human Hand Bottom Right"
-          className="w-full h-full object-contain filter drop-shadow-xl"
+          className="w-full h-full object-contain filter drop-shadow-xl max-sm:opacity-30 transition-opacity"
         />
       </div>
     </div>
