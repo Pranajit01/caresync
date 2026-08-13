@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { createClient, supabaseAdmin } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
@@ -14,6 +14,25 @@ export async function POST(request: Request) {
     }
 
     const dateToUse = bookingDate || new Date().toISOString().split("T")[0];
+
+    // Ensure user row exists in public.users to fulfill foreign key constraint
+    try {
+      const { data: userProfile } = await supabaseAdmin
+        .from("users")
+        .select("id")
+        .eq("id", patientId)
+        .maybeSingle();
+
+      if (!userProfile) {
+        await supabaseAdmin.from("users").upsert({
+          id: patientId,
+          full_name: "Patient",
+          role: "patient",
+        });
+      }
+    } catch (profileErr) {
+      console.warn("User profile check warning:", profileErr);
+    }
 
     // Call atomic Postgres RPC function to generate token and insert appointment
     const { data, error } = await supabaseAdmin.rpc("book_appointment", {
@@ -52,7 +71,7 @@ export async function POST(request: Request) {
         doctors ( id, full_name, specialization )
       `)
       .eq("id", result.appointment_id)
-      .single();
+      .maybeSingle();
 
     if (fetchErr) {
       console.error("Fetch Appointment Details Error:", fetchErr);

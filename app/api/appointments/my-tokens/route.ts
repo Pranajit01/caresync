@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { createClient, supabaseAdmin } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   try {
@@ -13,7 +13,9 @@ export async function GET(request: Request) {
       );
     }
 
-    const { data: appointments, error } = await supabaseAdmin
+    // 1. Try authenticated server client using cookies
+    const supabase = await createClient();
+    let { data: appointments, error } = await supabase
       .from("appointments")
       .select(`
         id,
@@ -26,9 +28,24 @@ export async function GET(request: Request) {
       .eq("patient_id", patientId)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching patient tokens:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    // 2. Fallback to admin client if empty or error
+    if (error || !appointments || appointments.length === 0) {
+      const adminRes = await supabaseAdmin
+        .from("appointments")
+        .select(`
+          id,
+          token_number,
+          status,
+          created_at,
+          hospitals ( id, name, address ),
+          doctors ( id, full_name, specialization )
+        `)
+        .eq("patient_id", patientId)
+        .order("created_at", { ascending: false });
+
+      if (!adminRes.error && adminRes.data && adminRes.data.length > 0) {
+        appointments = adminRes.data;
+      }
     }
 
     return NextResponse.json({ appointments: appointments || [] });
