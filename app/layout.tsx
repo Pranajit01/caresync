@@ -7,13 +7,7 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const getBaseUrl = () => {
-  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "https://caresync-india.vercel.app";
-};
-
-const baseUrl = getBaseUrl();
+const baseUrl = "https://caresync-india.vercel.app";
 
 export const metadata: Metadata = {
   title: "CareSync India — Real-Time Smart OPD & Emergency Healthcare",
