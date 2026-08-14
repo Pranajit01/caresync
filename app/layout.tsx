@@ -38,6 +38,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  verification: {
+    google: "MbPbGnGz548mjQVADHX0PLAPY3eNBDP0LZLlAKl18aI",
+  },
   openGraph: {
     title: "CareSync India — Connected Care. Better Health.",
     description:
