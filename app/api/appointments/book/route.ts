@@ -64,6 +64,7 @@ export async function POST(request: Request) {
       .from("appointments")
       .select(`
         id,
+        appointment_date,
         token_number,
         status,
         created_at,

@@ -114,14 +114,15 @@ CREATE POLICY "doctors_update_superadmin"
 -- TABLE 4: appointments  (Section 5 — exact columns)
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.appointments (
-  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  patient_id   uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  doctor_id    uuid NOT NULL REFERENCES public.doctors(id) ON DELETE CASCADE,
-  hospital_id  uuid NOT NULL REFERENCES public.hospitals(id) ON DELETE CASCADE,
-  token_number integer NOT NULL,
-  status       text NOT NULL DEFAULT 'booked'
-                 CHECK (status IN ('booked', 'in_progress', 'completed', 'cancelled')),
-  created_at   timestamptz NOT NULL DEFAULT now()
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id       uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  doctor_id        uuid NOT NULL REFERENCES public.doctors(id) ON DELETE CASCADE,
+  hospital_id      uuid NOT NULL REFERENCES public.hospitals(id) ON DELETE CASCADE,
+  appointment_date date NOT NULL DEFAULT CURRENT_DATE,
+  token_number     integer NOT NULL,
+  status           text NOT NULL DEFAULT 'booked'
+                     CHECK (status IN ('booked', 'in_progress', 'completed', 'cancelled')),
+  created_at       timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 

@@ -16,6 +16,7 @@ import {
 
 interface AppointmentDetail {
   id: string;
+  appointment_date?: string;
   token_number: number;
   status: string;
   created_at: string;
@@ -83,13 +84,13 @@ export default function PatientQueueScreen() {
         const appt: AppointmentDetail = json.appointment;
         setAppointment(appt);
 
-        // Fetch current queue_state for this doctor + today
-        const today = new Date(appt.created_at).toISOString().split("T")[0];
+        // Fetch current queue_state for this doctor + appointment date
+        const apptDate = appt.appointment_date || new Date(appt.created_at).toISOString().split("T")[0];
         const { data: qs, error: qsErr } = await supabase
           .from("queue_state")
           .select("*")
           .eq("doctor_id", appt.doctor_id)
-          .eq("date", today)
+          .eq("date", apptDate)
           .single();
 
         if (!qsErr && qs) {
@@ -111,11 +112,11 @@ export default function PatientQueueScreen() {
   useEffect(() => {
     if (!appointment) return;
 
-    const today = new Date(appointment.created_at).toISOString().split("T")[0];
+    const apptDate = appointment.appointment_date || new Date(appointment.created_at).toISOString().split("T")[0];
 
     // Subscribe to INSERT / UPDATE events on queue_state for this doctor + date
     const channel = supabase
-      .channel(`queue_state:${appointment.doctor_id}:${today}`)
+      .channel(`queue_state:${appointment.doctor_id}:${apptDate}`)
       .on(
         "postgres_changes",
         {
@@ -126,7 +127,7 @@ export default function PatientQueueScreen() {
         },
         (payload) => {
           const updated = payload.new as QueueState;
-          if (updated && updated.date === today) {
+          if (updated && updated.date === apptDate) {
             setQueueState(updated);
           }
         }

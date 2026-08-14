@@ -18,12 +18,14 @@ export async function GET(request: Request) {
       );
     }
 
-    const today = new Date().toISOString().split("T")[0];
+    const dateParam = searchParams.get("date");
+    const targetDate = dateParam || new Date().toISOString().split("T")[0];
 
     const { data: appointments, error } = await supabaseAdmin
       .from("appointments")
       .select(`
         id,
+        appointment_date,
         token_number,
         status,
         created_at,
@@ -32,8 +34,7 @@ export async function GET(request: Request) {
         doctors ( id, full_name, specialization )
       `)
       .eq("hospital_id", hospitalId)
-      .gte("created_at", `${today}T00:00:00Z`)
-      .lte("created_at", `${today}T23:59:59Z`)
+      .eq("appointment_date", targetDate)
       .order("token_number", { ascending: true });
 
     if (error) {

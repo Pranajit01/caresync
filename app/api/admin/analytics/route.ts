@@ -27,10 +27,9 @@ export async function GET(request: Request) {
     // Fetch today's appointments for this hospital
     const { data: appts, error: apptErr } = await supabaseAdmin
       .from("appointments")
-      .select("id, status, token_number, created_at")
+      .select("id, status, token_number, appointment_date, created_at")
       .eq("hospital_id", hospitalId)
-      .gte("created_at", `${today}T00:00:00Z`)
-      .lte("created_at", `${today}T23:59:59Z`);
+      .eq("appointment_date", today);
 
     if (apptErr) {
       console.error("Error fetching analytics appointments:", apptErr);

@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase/client";
 
 interface Appointment {
   id: string;
+  appointment_date?: string;
   token_number: number;
   status: string;
   created_at: string;
@@ -59,6 +60,7 @@ export default function PatientDashboardPage() {
             .from("appointments")
             .select(`
               id,
+              appointment_date,
               token_number,
               status,
               created_at,
@@ -233,7 +235,7 @@ export default function PatientDashboardPage() {
                   <div className="border-t border-zinc-100 pt-2 text-xs text-zinc-500">
                     <p className="font-medium text-zinc-700">{t.hospitals?.name || "Hospital OPD"}</p>
                     <p className="text-[#a0a0a0] text-[11px] mt-0.5">
-                      Booked on: {new Date(t.created_at).toLocaleDateString()}
+                      Date: {t.appointment_date || new Date(t.created_at).toLocaleDateString()}
                     </p>
                   </div>
 

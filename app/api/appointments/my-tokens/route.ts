@@ -19,6 +19,7 @@ export async function GET(request: Request) {
       .from("appointments")
       .select(`
         id,
+        appointment_date,
         token_number,
         status,
         created_at,
@@ -34,6 +35,7 @@ export async function GET(request: Request) {
         .from("appointments")
         .select(`
           id,
+          appointment_date,
           token_number,
           status,
           created_at,
