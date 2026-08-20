@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * POST /api/admin/beds/update
@@ -12,6 +13,16 @@ import { supabaseAdmin } from "@/lib/supabase/server";
  */
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabase.auth.getUser();
+
+    if (authErr || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { bedId, delta, hospitalId } = await request.json();
 
     if (!bedId || typeof delta !== "number" || !hospitalId) {
@@ -28,10 +39,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data, error } = await supabaseAdmin.rpc("update_bed_count", {
+    const { data, error } = await supabaseAdmin.rpc("update_bed_count_v2", {
       p_bed_id: bedId,
       p_delta: delta,
       p_hospital_id: hospitalId,
+      p_user_id: user.id,
     });
 
     if (error) {

@@ -1,0 +1,17 @@
+{
+  "name": "CareSync",
+  "short_name": "CareSync",
+  "description": "Real-Time Smart OPD Queue Tracking & Emergency Bed Finder",
+  "start_url": "/patient/dashboard",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#E63946",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

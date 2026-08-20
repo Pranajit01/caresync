@@ -16,24 +16,28 @@ import {
   RefreshCw as RefreshCwIcon,
   PhoneCall as PhoneIcon,
   AlertTriangle as AlertIcon,
+  Sparkles as SparklesIcon,
+  AlertCircle as AlertCircleIcon,
 } from "lucide-react";
+import { rankHospitals, getHaversineDistance, HospitalWithBeds } from "@/lib/bedFinderRanking";
 
-interface BedInfo {
-  id: string;
-  ward_type: "ICU" | "General" | "Emergency";
-  total_beds: number;
-  available_beds: number;
-  updated_at: string;
+const DEFAULT_KOLKATA_LOCATION = { latitude: 22.54, longitude: 88.37 };
+
+function formatVerifiedTime(lastVerifiedAt: string | null | undefined, beds: any[] = []) {
+  const dateStr = lastVerifiedAt || (beds.length > 0 ? beds.reduce((max, b) => b.updated_at > max ? b.updated_at : max, beds[0].updated_at) : null);
+  if (!dateStr) return "Verified recently";
+  
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const diffMins = Math.max(0, Math.floor(diffMs / 60000));
+  
+  if (diffMins < 1) return "Verified <1 min ago";
+  if (diffMins < 60) return `Verified ${diffMins} min ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `Verified ${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `Verified ${diffDays}d ago`;
 }
 
-interface HospitalWithBeds {
-  id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  beds: BedInfo[];
-}
 
 export default function EmergencyBedFinderPage() {
   const router = useRouter();
@@ -47,8 +51,36 @@ export default function EmergencyBedFinderPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [realtimeConnected, setRealtimeConnected] = useState(false);
 
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+
+  // PWA/Offline state
+  const [cachedTime, setCachedTime] = useState<number | null>(null);
+  const [offlineAgeText, setOfflineAgeText] = useState<string>("");
+  const [reconnectDelay, setReconnectDelay] = useState<number>(2000);
+  const [reconnectTrigger, setReconnectTrigger] = useState(0);
+
   // Channel ref for cleanup
   const bedChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  // Initialize: Attempt to restore safe state from localStorage cache
+  useEffect(() => {
+    const cacheKey = "caresync:beds";
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        setCachedTime(parsed.timestamp);
+        setHospitals(parsed.hospitals || []);
+        if (parsed.hospitals?.length > 0 && !selectedHospitalId) {
+          setSelectedHospitalId(parsed.hospitals[0].id);
+        }
+        setLoading(false);
+      } catch (e) {
+        console.error("[cache] Failed to restore beds state:", e);
+      }
+    }
+  }, []);
 
   // Authenticate patient
   useEffect(() => {
@@ -60,6 +92,26 @@ export default function EmergencyBedFinderPage() {
       setUser(u);
     });
   }, [router]);
+
+  // Request patient geolocation on mount
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+        setLocating(false);
+      },
+      (err) => {
+        console.warn("Geolocation failed, defaulting to Kolkata Center:", err.message);
+        setLocating(false);
+      },
+      { timeout: 8000 }
+    );
+  }, []);
 
   // Fetch hospital bed inventory
   const fetchEmergencyBeds = async () => {
@@ -74,10 +126,13 @@ export default function EmergencyBedFinderPage() {
           setSelectedHospitalId(json.hospitals[0].id);
         }
       } else {
-        setError(json.error || "Failed to load bed inventory.");
+        // If we have cached data, don't show full page error
+        if (!localStorage.getItem("caresync:beds")) {
+          setError(json.error || "Failed to load bed inventory.");
+        }
       }
     } catch (e: any) {
-      setError(e.message);
+      console.error("Fetch beds network error:", e.message);
     } finally {
       setLoading(false);
     }
@@ -87,9 +142,59 @@ export default function EmergencyBedFinderPage() {
     fetchEmergencyBeds();
   }, []);
 
-  // Supabase Realtime subscription on `beds` table
-  // Per PRD & TRD: Live bed count changes from hospital admin reflect instantly on patient finder screen!
+  // Update localStorage cache when hospitals change
+  // Caches only safe metrics (bed counts, names). No patient-sensitive details.
   useEffect(() => {
+    if (hospitals.length === 0) return;
+    const cacheKey = "caresync:beds";
+    const payload = {
+      hospitals: hospitals.map(h => ({
+        id: h.id,
+        name: h.name,
+        address: h.address,
+        latitude: h.latitude,
+        longitude: h.longitude,
+        beds: h.beds,
+        last_verified_at: h.last_verified_at,
+      })),
+      timestamp: Date.now()
+    };
+    localStorage.setItem(cacheKey, JSON.stringify(payload));
+    setCachedTime(payload.timestamp);
+  }, [hospitals]);
+
+  // Keep calculating cached data age
+  useEffect(() => {
+    if (cachedTime === null) return;
+    const updateAge = () => {
+      const diffMs = Date.now() - cachedTime;
+      const diffSecs = Math.max(0, Math.floor(diffMs / 1000));
+      if (diffSecs < 60) {
+        setOfflineAgeText(`${diffSecs}s ago`);
+      } else {
+        const diffMins = Math.floor(diffSecs / 60);
+        setOfflineAgeText(`${diffMins} min ago`);
+      }
+    };
+    updateAge();
+    const interval = setInterval(updateAge, 5000);
+    return () => clearInterval(interval);
+  }, [cachedTime]);
+
+  // Supabase Realtime subscription on `beds` table with Exponential Reconnection
+  useEffect(() => {
+    let active = true;
+    let reconnectTimeout: ReturnType<typeof setTimeout>;
+
+    const handleReconnect = () => {
+      if (!active) return;
+      console.log(`[realtime-beds] Reconnecting in ${reconnectDelay}ms...`);
+      reconnectTimeout = setTimeout(() => {
+        setReconnectTrigger((prev) => prev + 1);
+        setReconnectDelay((prev) => Math.min(prev * 2, 30000));
+      }, reconnectDelay);
+    };
+
     const channel = supabase
       .channel("patient_emergency_beds")
       .on(
@@ -100,7 +205,7 @@ export default function EmergencyBedFinderPage() {
           table: "beds",
         },
         (payload) => {
-          const updatedBed = payload.new as BedInfo;
+          const updatedBed = payload.new as any;
           if (updatedBed && updatedBed.id) {
             setHospitals((prev) =>
               prev.map((h) => ({
@@ -110,19 +215,31 @@ export default function EmergencyBedFinderPage() {
                 ),
               }))
             );
+            setReconnectDelay(2000); // Reset delay
           }
         }
       )
       .subscribe((status) => {
-        setRealtimeConnected(status === "SUBSCRIBED");
+        if (!active) return;
+        if (status === "SUBSCRIBED") {
+          setRealtimeConnected(true);
+          setReconnectDelay(2000); // Reset delay
+        } else {
+          setRealtimeConnected(false);
+          handleReconnect();
+        }
       });
 
     bedChannelRef.current = channel;
 
     return () => {
+      active = false;
+      clearTimeout(reconnectTimeout);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [reconnectTrigger]);
+
+  const activeLocation = userLocation || DEFAULT_KOLKATA_LOCATION;
 
   // Filtered & searched hospital list
   const filteredHospitals = hospitals.filter((h) => {
@@ -137,6 +254,28 @@ export default function EmergencyBedFinderPage() {
     const wardBed = h.beds.find((b) => b.ward_type === filterWard);
     return wardBed && wardBed.available_beds > 0;
   });
+
+  // Keep distance-based sorting for the general list
+  const sortedGeneralHospitals = [...filteredHospitals]
+    .map((h) => {
+      const distance = getHaversineDistance(
+        activeLocation.latitude,
+        activeLocation.longitude,
+        h.latitude,
+        h.longitude
+      );
+      return { ...h, distanceKm: distance };
+    })
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+
+  // Recommendations ranking: top 1-2 hospitals
+  const requestedWardForRecommendation = filterWard === "All" ? "Emergency" : filterWard;
+  const recommendations = rankHospitals(
+    hospitals,
+    activeLocation.latitude,
+    activeLocation.longitude,
+    requestedWardForRecommendation
+  ).slice(0, 2);
 
   // Calculate total emergency network beds
   const totalNetworkAvailable = hospitals.reduce((sum, h) => {
@@ -193,6 +332,14 @@ export default function EmergencyBedFinderPage() {
           </button>
         </div>
       </header>
+
+      {/* ===== OFFLINE / RECONNECTING BANNER ===== */}
+      {!realtimeConnected && cachedTime !== null && (
+        <div className="bg-amber-500 text-white text-xs font-bold text-center py-2.5 px-4 flex items-center justify-center gap-2 animate-pulse sticky top-[61px] z-20">
+          <AlertCircleIcon className="w-4 h-4 shrink-0" />
+          <span>Showing last known data from {offlineAgeText} — reconnecting...</span>
+        </div>
+      )}
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-5 flex-1 flex flex-col">
@@ -278,7 +425,7 @@ export default function EmergencyBedFinderPage() {
                 <AlertIcon className="w-4 h-4 shrink-0 text-red-700" />
                 <span>{error}</span>
               </div>
-            ) : filteredHospitals.length === 0 ? (
+            ) : sortedGeneralHospitals.length === 0 ? (
               <div className="py-16 text-center bg-white rounded-xl border border-zinc-200 p-6">
                 <p className="text-sm font-semibold text-zinc-700">
                   No hospitals matching filter.
@@ -288,7 +435,7 @@ export default function EmergencyBedFinderPage() {
                 </p>
               </div>
             ) : (
-              filteredHospitals.map((h) => {
+              sortedGeneralHospitals.map((h) => {
                 const isSelected = h.id === selectedHospitalId;
                 const icu = h.beds.find((b) => b.ward_type === "ICU")?.available_beds ?? 0;
                 const gen = h.beds.find((b) => b.ward_type === "General")?.available_beds ?? 0;
@@ -315,18 +462,26 @@ export default function EmergencyBedFinderPage() {
                             {h.name}
                           </h3>
                           <p className="text-xs text-zinc-500 mt-0.5">{h.address}</p>
+                          <span className="text-[11px] font-semibold text-zinc-500 block mt-1">
+                            {h.distanceKm.toFixed(1)} km away
+                          </span>
                         </div>
                       </div>
 
-                      <span
-                        className={`px-2.5 py-1 text-xs font-black rounded-lg shrink-0 ${
-                          totalAvail > 0
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-zinc-100 text-zinc-400"
-                        }`}
-                      >
-                        {totalAvail} Free
-                      </span>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span
+                          className={`px-2.5 py-1 text-xs font-black rounded-lg ${
+                            totalAvail > 0
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-zinc-100 text-zinc-400"
+                          }`}
+                        >
+                          {totalAvail} Free
+                        </span>
+                        <span className="text-[10px] text-zinc-400 font-semibold bg-zinc-50 border border-zinc-200 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                          {formatVerifiedTime(h.last_verified_at, h.beds)}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Ward Pill Badges */}
@@ -382,13 +537,64 @@ export default function EmergencyBedFinderPage() {
             )}
           </div>
 
-          {/* Right Column: OpenStreetMap Leaflet Map */}
-          <div className="lg:col-span-7 h-full min-h-[450px]">
-            <DynamicEmergencyMap
-              hospitals={filteredHospitals}
-              selectedHospitalId={selectedHospitalId}
-              onSelectHospital={(id) => setSelectedHospitalId(id)}
-            />
+          {/* Right Column: Recommendation Banner + OpenStreetMap Leaflet Map */}
+          <div className="lg:col-span-7 flex flex-col min-h-[450px]">
+            {recommendations.length > 0 && (
+              <div className="bg-gradient-to-r from-red-500/10 to-rose-500/10 border border-red-200/50 rounded-xl p-4 mb-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <SparklesIcon className="w-5 h-5 text-[#E63946] animate-pulse" />
+                    <h3 className="text-sm font-bold text-zinc-900">
+                      Best Options For You ({requestedWardForRecommendation} Ward)
+                    </h3>
+                  </div>
+                  <span className="text-[10px] bg-red-100 text-[#E63946] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    Recommended
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {recommendations.map((rec) => {
+                    const targetBed = rec.beds.find((b) => b.ward_type === requestedWardForRecommendation);
+                    const openBeds = targetBed?.available_beds ?? 0;
+                    
+                    return (
+                      <div
+                        key={rec.id}
+                        onClick={() => setSelectedHospitalId(rec.id)}
+                        className={`p-3 rounded-lg border transition-all cursor-pointer bg-white/80 hover:bg-white flex flex-col justify-between ${
+                          rec.id === selectedHospitalId
+                            ? "border-[#E63946] ring-1 ring-red-100 shadow-sm"
+                            : "border-zinc-200 hover:border-zinc-300"
+                        }`}
+                      >
+                        <div>
+                          <h4 className="font-bold text-xs text-zinc-900 line-clamp-1">{rec.name}</h4>
+                          <p className="text-[11px] text-zinc-500 line-clamp-1 mt-0.5">{rec.address}</p>
+                        </div>
+                        
+                        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-zinc-100">
+                          <span className="text-[11px] text-zinc-600 font-medium">
+                            {rec.distanceKm.toFixed(1)} km away &bull; {openBeds} {requestedWardForRecommendation} {openBeds === 1 ? "bed" : "beds"} open
+                          </span>
+                          <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
+                            Score: {rec.score.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex-1 min-h-[400px]">
+              <DynamicEmergencyMap
+                hospitals={sortedGeneralHospitals}
+                selectedHospitalId={selectedHospitalId}
+                onSelectHospital={(id) => setSelectedHospitalId(id)}
+              />
+            </div>
           </div>
         </div>
       </main>

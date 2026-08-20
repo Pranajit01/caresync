@@ -18,7 +18,24 @@ interface HospitalWithBeds {
   latitude: number;
   longitude: number;
   beds?: BedInfo[];
+  last_verified_at?: string | null;
 }
+
+function formatVerifiedTime(lastVerifiedAt: string | null | undefined, beds: any[] = []) {
+  const dateStr = lastVerifiedAt || (beds.length > 0 ? beds.reduce((max, b) => b.updated_at > max ? b.updated_at : max, beds[0].updated_at) : null);
+  if (!dateStr) return "Verified recently";
+  
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const diffMins = Math.max(0, Math.floor(diffMs / 60000));
+  
+  if (diffMins < 1) return "Verified <1 min ago";
+  if (diffMins < 60) return `Verified ${diffMins} min ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `Verified ${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `Verified ${diffDays}d ago`;
+}
+
 
 interface EmergencyMapProps {
   hospitals: HospitalWithBeds[];
@@ -95,11 +112,16 @@ export default function EmergencyMap({
       const icon = createCustomIcon(isSelected, totalAvail);
       const marker = L.marker([h.latitude, h.longitude], { icon }).addTo(map);
 
+      const verifiedText = formatVerifiedTime(h.last_verified_at, beds);
+
       // Popup Content
       const popupHtml = `
         <div style="font-family: sans-serif; padding: 4px; max-width: 240px;">
           <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 700; color: #18181B;">${h.name}</h4>
-          <p style="margin: 0 0 8px 0; font-size: 11px; color: #71717A;">${h.address}</p>
+          <p style="margin: 0 0 4px 0; font-size: 11px; color: #71717A;">${h.address}</p>
+          <div style="font-size: 10px; color: #E63946; font-weight: 600; margin-bottom: 6px;">
+            ${verifiedText}
+          </div>
           <div style="display: flex; gap: 4px; margin-bottom: 8px;">
             <span style="background: #FEF2F2; color: #991B1B; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;">ICU: ${icu}</span>
             <span style="background: #F0FDF4; color: #166534; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700;">Gen: ${gen}</span>

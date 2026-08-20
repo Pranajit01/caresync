@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase/client";
 
-export type UserRole = "patient" | "hospital_admin" | "super_admin";
+export type UserRole = "patient" | "hospital_admin" | "super_admin" | "doctor" | "nurse" | "admin";
+export const STAFF_ROLES: UserRole[] = ["hospital_admin", "super_admin", "doctor", "nurse", "admin"];
 
 export interface SignUpParams {
   email: string;

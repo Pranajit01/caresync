@@ -59,10 +59,13 @@ export async function createAdminClient() {
 }
 
 /**
- * Direct Supabase client instance for API routes and background operations.
- * Uses valid anon key guaranteeing zero 'Invalid API Key' errors.
+ * True service-role admin client — bypasses RLS.
+ * Uses SUPABASE_SERVICE_ROLE_KEY. Only call from server-side API routes.
  */
+const supabaseServiceRoleKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
+
 export const supabaseAdmin = createSupabaseClient(
   supabaseUrl,
-  supabaseAnonKey
+  supabaseServiceRoleKey
 );

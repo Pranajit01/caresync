@@ -2,16 +2,16 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 /**
- * POST /api/admin/queue/start-consultation
+ * POST /api/admin/queue/confirm-present
  * Body: { appointmentId: string }
  *
- * Two-step call flow — Step 1:
- *   - "Call Patient" transitions status: booked → called, records called_at.
- *   - Does NOT yet advance queue_state.now_serving_token.
- *   - That only happens when staff confirms "Patient Present"
- *     via /api/admin/queue/confirm-present.
+ * Two-step call flow — Step 2:
+ *   - "Patient Present" confirms the patient arrived after being called.
+ *   - Sets status: called → in_consultation
+ *   - Advances queue_state.now_serving_token (via confirm_patient_present RPC)
  *
- * Uses the atomic start_consultation() Postgres RPC.
+ * Only step 2 updates the live queue number — so the now-serving display
+ * doesn't jump until the patient actually sits down.
  */
 export async function POST(request: Request) {
   try {
@@ -24,14 +24,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data, error } = await supabaseAdmin.rpc("start_consultation", {
+    const { data, error } = await supabaseAdmin.rpc("confirm_patient_present", {
       p_appointment_id: appointmentId,
     });
 
     if (error) {
-      console.error("start_consultation RPC error:", error);
+      console.error("confirm_patient_present RPC error:", error);
       return NextResponse.json(
-        { error: error.message || "Failed to call patient" },
+        { error: error.message || "Failed to confirm patient present" },
         { status: 500 }
       );
     }
@@ -40,12 +40,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      status: "called",
+      now_serving_token: result?.now_serving,
       token_number: result?.token_number,
-      called_at: result?.called_at,
     });
   } catch (err: any) {
-    console.error("start-consultation route exception:", err);
+    console.error("confirm-present route exception:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

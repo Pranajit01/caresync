@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getCurrentUser, signOutUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase/client";
 import {
@@ -18,22 +19,40 @@ import {
   Minus as MinusIcon,
   CheckCircle2 as CheckCircleIcon,
   Info as InfoIcon,
+  Key as KeyIcon,
+  Copy as CopyIcon,
+  ShieldCheck as ShieldIcon,
+  ShieldAlert as ShieldAlertIcon,
 } from "lucide-react";
 
 interface Hospital {
   id: string;
   name: string;
   address: string;
+  status?: string;
+  license_number?: string;
+  contact_info?: string;
+}
+
+interface StaffInvite {
+  id: string;
+  code: string;
+  role: string;
+  used: boolean;
+  expires_at: string;
+  created_at: string;
 }
 
 interface QueueRow {
   id: string;
   token_number: number;
-  status: "booked" | "in_progress" | "completed" | "cancelled";
+  status: "booked" | "called" | "in_progress" | "in_consultation" | "completed" | "cancelled" | "skipped";
+  called_at?: string | null;
+  skipped_requeued_at?: string | null;
   created_at: string;
   patient_id: string;
   users?: { id: string; full_name: string; phone: string };
-  doctors?: { id: string; full_name: string; specialization: string };
+  doctors?: { id: string; full_name: string; specialization: string; no_show_threshold_seconds?: number };
 }
 
 interface BedRow {
@@ -60,13 +79,27 @@ interface AnalyticsData {
   };
 }
 
-type TabType = "queue" | "beds" | "analytics";
+type TabType = "queue" | "beds" | "analytics" | "invites";
 
 const STATUS_COLORS: Record<string, string> = {
   booked: "bg-blue-50 text-blue-700 border-blue-200",
+  called: "bg-orange-50 text-orange-700 border-orange-200",
   in_progress: "bg-amber-50 text-amber-700 border-amber-200",
+  in_consultation: "bg-amber-50 text-amber-700 border-amber-200",
   completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
   cancelled: "bg-zinc-100 text-zinc-500 border-zinc-200",
+  skipped: "bg-rose-50 text-rose-600 border-rose-200",
+};
+
+/** Human-readable label for each queue status */
+const STATUS_LABELS: Record<string, string> = {
+  booked: "Waiting",
+  called: "Called",
+  in_progress: "In Consultation",
+  in_consultation: "In Consultation",
+  completed: "Completed",
+  cancelled: "Cancelled",
+  skipped: "Skipped",
 };
 
 export default function AdminDashboardPage() {
@@ -95,9 +128,23 @@ export default function AdminDashboardPage() {
   const [bedUpdatingId, setBedUpdatingId] = useState<string | null>(null);
   const [bedError, setBedError] = useState<string | null>(null);
 
+  // Reconciliation state
+  const [reconcileBed, setReconcileBed] = useState<BedRow | null>(null);
+  const [physicalCount, setPhysicalCount] = useState<number>(0);
+  const [reconciling, setReconciling] = useState(false);
+  const [reconcileError, setReconcileError] = useState<string | null>(null);
+
   // Analytics state
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+  // Invites state
+  const [invites, setInvites] = useState<StaffInvite[]>([]);
+  const [loadingInvites, setLoadingInvites] = useState(false);
+  const [inviteRole, setInviteRole] = useState<"doctor" | "nurse" | "admin">("doctor");
+  const [generatingInvite, setGeneratingInvite] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Realtime channel ref
   const bedChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -205,6 +252,56 @@ export default function AdminDashboardPage() {
     }
   }, [hospital]);
 
+  // Fetch staff invites
+  const fetchInvites = useCallback(async () => {
+    setLoadingInvites(true);
+    setInviteError(null);
+    try {
+      const res = await fetch("/api/admin/invites");
+      const json = await res.json();
+      if (res.ok) {
+        setInvites(json.invites || []);
+      } else {
+        setInviteError(json.error || "Failed to load invite codes.");
+      }
+    } catch (e: any) {
+      setInviteError(e.message);
+    } finally {
+      setLoadingInvites(false);
+    }
+  }, []);
+
+  // Generate a new invite code
+  const handleGenerateInvite = async () => {
+    setGeneratingInvite(true);
+    setInviteError(null);
+    try {
+      const res = await fetch("/api/admin/invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: inviteRole }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setInviteError(json.error || "Failed to generate invite.");
+      } else {
+        setInvites((prev) => [json.invite, ...prev]);
+      }
+    } catch (e: any) {
+      setInviteError(e.message);
+    } finally {
+      setGeneratingInvite(false);
+    }
+  };
+
+  // Copy code to clipboard
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2000);
+    });
+  };
+
   // Load active tab data
   useEffect(() => {
     if (!hospital) return;
@@ -214,8 +311,10 @@ export default function AdminDashboardPage() {
       fetchBeds();
     } else if (activeTab === "analytics") {
       fetchAnalytics();
+    } else if (activeTab === "invites") {
+      fetchInvites();
     }
-  }, [hospital, activeTab, fetchQueue, fetchBeds, fetchAnalytics]);
+  }, [hospital, activeTab, fetchQueue, fetchBeds, fetchAnalytics, fetchInvites]);
 
   // Realtime subscription on beds table for live bed manager updates
   useEffect(() => {
@@ -254,8 +353,8 @@ export default function AdminDashboardPage() {
     router.push("/login");
   };
 
-  // Start Consultation
-  const handleStartConsultation = async (appointmentId: string) => {
+  // Step 1: Call Patient — booked → called (records called_at, does NOT advance queue display yet)
+  const handleCallPatient = async (appointmentId: string) => {
     setActionInProgress(appointmentId);
     setQueueError(null);
     try {
@@ -266,12 +365,14 @@ export default function AdminDashboardPage() {
       });
       const json = await res.json();
       if (!res.ok || json.error) {
-        setQueueError(json.error || "Failed to start consultation.");
+        setQueueError(json.error || "Failed to call patient.");
         return;
       }
       setQueueRows((prev) =>
         prev.map((row) =>
-          row.id === appointmentId ? { ...row, status: "in_progress" } : row
+          row.id === appointmentId
+            ? { ...row, status: "called", called_at: json.called_at ?? new Date().toISOString() }
+            : row
         )
       );
     } catch (e: any) {
@@ -281,7 +382,67 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Mark Complete
+  // Step 2: Patient Present — called → in_consultation (advances queue_state.now_serving_token)
+  const handleConfirmPresent = async (appointmentId: string) => {
+    setActionInProgress(appointmentId);
+    setQueueError(null);
+    try {
+      const res = await fetch("/api/admin/queue/confirm-present", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointmentId }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setQueueError(json.error || "Failed to confirm patient present.");
+        return;
+      }
+      setQueueRows((prev) =>
+        prev.map((row) =>
+          row.id === appointmentId ? { ...row, status: "in_consultation" } : row
+        )
+      );
+    } catch (e: any) {
+      setQueueError(e.message);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  // Skip: called → skipped (with automatic one-time re-queue)
+  const handleSkip = async (appointmentId: string) => {
+    setActionInProgress(appointmentId);
+    setQueueError(null);
+    try {
+      const res = await fetch("/api/admin/queue/skip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointmentId }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setQueueError(json.error || "Failed to skip token.");
+        return;
+      }
+      // Mark original as skipped, and if requeued append new booked row
+      setQueueRows((prev) => {
+        const updated = prev.map((row) =>
+          row.id === appointmentId
+            ? { ...row, status: "skipped" as const, skipped_requeued_at: json.requeued ? new Date().toISOString() : null }
+            : row
+        );
+        // Refetch queue to pick up the newly inserted re-queue row
+        if (json.requeued) fetchQueue();
+        return updated;
+      });
+    } catch (e: any) {
+      setQueueError(e.message);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  // Step 3: Mark Complete — in_consultation → completed
   const handleMarkComplete = async (appointmentId: string) => {
     setActionInProgress(appointmentId);
     setQueueError(null);
@@ -336,6 +497,47 @@ export default function AdminDashboardPage() {
       setBedError(e.message);
     } finally {
       setBedUpdatingId(null);
+    }
+  };
+
+  const handleOpenReconcileModal = (bed: BedRow) => {
+    setReconcileBed(bed);
+    setPhysicalCount(bed.available_beds);
+    setReconcileError(null);
+  };
+
+  const handleReconcileConfirm = async () => {
+    if (!reconcileBed || !hospital) return;
+    setReconciling(true);
+    setReconcileError(null);
+    try {
+      const res = await fetch("/api/admin/beds/reconcile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bedId: reconcileBed.id,
+          actualCount: physicalCount,
+          hospitalId: hospital.id,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setReconcileError(json.error || "Failed to reconcile bed count.");
+        return;
+      }
+
+      // Update the local bedRows count
+      if (json.bed) {
+        setBedRows((prev) =>
+          prev.map((b) => (b.id === reconcileBed.id ? { ...b, ...json.bed } : b))
+        );
+      }
+      // Close modal
+      setReconcileBed(null);
+    } catch (e: any) {
+      setReconcileError(e.message);
+    } finally {
+      setReconciling(false);
     }
   };
 
@@ -413,14 +615,51 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
+        {/* Pending / Rejected hospital banner */}
+        {hospital?.status === "pending" && (
+          <div className="px-4 py-3 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-3">
+            <ShieldAlertIcon className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-amber-800">Hospital Pending Verification</p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Your hospital registration is under review by a CareSync administrator.
+                Queue management, bed updates, and invite code generation are locked until your hospital is approved.
+              </p>
+            </div>
+          </div>
+        )}
+        {hospital?.status === "rejected" && (
+          <div className="px-4 py-3 bg-red-50 border border-red-300 rounded-xl flex items-start gap-3">
+            <ShieldAlertIcon className="w-5 h-5 text-[#E63946] shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-[#E63946]">Hospital Registration Rejected</p>
+              <p className="text-xs text-red-600 mt-0.5">
+                Your hospital registration was not approved. Please contact CareSync support to resolve this.
+              </p>
+            </div>
+          </div>
+        )}
+        {user?.role === "super_admin" && (
+          <div className="px-4 py-2.5 bg-zinc-900 text-white rounded-xl flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldIcon className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs font-semibold">Super Admin Mode</span>
+            </div>
+            <Link href="/admin/super-admin" className="text-xs font-bold text-emerald-400 hover:text-emerald-300 underline">
+              Review Pending Hospitals →
+            </Link>
+          </div>
+        )}
+
         {/* Tab Navigation */}
-        <div className="border-b border-zinc-200 flex items-center gap-2">
+        <div className="border-b border-zinc-200 flex items-center gap-2 overflow-x-auto">
           <button
             onClick={() => setActiveTab("queue")}
-            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+            disabled={hospital?.status === "pending" || hospital?.status === "rejected"}
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
               activeTab === "queue"
                 ? "border-[#E63946] text-[#E63946]"
-                : "border-transparent text-zinc-500 hover:text-zinc-800"
+                : "border-transparent text-zinc-500 hover:text-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
             }`}
           >
             <UsersIcon className="w-4 h-4" />
@@ -429,10 +668,11 @@ export default function AdminDashboardPage() {
 
           <button
             onClick={() => setActiveTab("beds")}
-            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+            disabled={hospital?.status === "pending" || hospital?.status === "rejected"}
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
               activeTab === "beds"
                 ? "border-[#E63946] text-[#E63946]"
-                : "border-transparent text-zinc-500 hover:text-zinc-800"
+                : "border-transparent text-zinc-500 hover:text-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
             }`}
           >
             <BedIcon className="w-4 h-4" />
@@ -441,15 +681,31 @@ export default function AdminDashboardPage() {
 
           <button
             onClick={() => setActiveTab("analytics")}
-            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 ${
+            disabled={hospital?.status === "pending" || hospital?.status === "rejected"}
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
               activeTab === "analytics"
                 ? "border-[#E63946] text-[#E63946]"
-                : "border-transparent text-zinc-500 hover:text-zinc-800"
+                : "border-transparent text-zinc-500 hover:text-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
             }`}
           >
             <TrendingUpIcon className="w-4 h-4" />
             Analytics
           </button>
+
+          {["hospital_admin", "admin"].includes(user?.role || "") && (
+            <button
+              onClick={() => setActiveTab("invites")}
+              disabled={hospital?.status === "pending" || hospital?.status === "rejected"}
+              className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "invites"
+                  ? "border-[#E63946] text-[#E63946]"
+                  : "border-transparent text-zinc-500 hover:text-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed"
+              }`}
+            >
+              <KeyIcon className="w-4 h-4" />
+              Staff Invites
+            </button>
+          )}
         </div>
 
         {/* TAB 1: OPD QUEUE MANAGER */}
@@ -501,24 +757,39 @@ export default function AdminDashboardPage() {
                 {queueRows.map((row) => {
                   const isActioning = actionInProgress === row.id;
                   const isBooked = row.status === "booked";
-                  const isInProgress = row.status === "in_progress";
+                  const isCalled = row.status === "called";
+                  const isInConsultation =
+                    row.status === "in_consultation" || row.status === "in_progress";
                   const isDone = row.status === "completed";
+                  const isSkipped = row.status === "skipped";
+
+                  // Seconds elapsed since patient was called
+                  const secondsCalled = isCalled && row.called_at
+                    ? Math.floor((Date.now() - new Date(row.called_at).getTime()) / 1000)
+                    : 0;
+                  const threshold = row.doctors?.no_show_threshold_seconds ?? 180;
+                  const secondsLeft = Math.max(0, threshold - secondsCalled);
+                  const callTimedOut = isCalled && secondsCalled >= threshold;
 
                   return (
                     <div
                       key={row.id}
                       className={`px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
-                        isDone ? "opacity-50" : ""
-                      } ${isInProgress ? "bg-amber-50/40" : ""}`}
+                        isDone || isSkipped ? "opacity-50" : ""
+                      } ${isCalled ? "bg-orange-50/40" : ""} ${isInConsultation ? "bg-amber-50/40" : ""}`}
                     >
                       {/* Patient & Doctor info */}
                       <div className="flex items-center gap-4">
                         <div
                           className={`min-w-[52px] text-center px-3 py-2 rounded-xl font-black text-xl ${
-                            isInProgress
+                            isCalled
+                              ? "bg-orange-100 text-orange-700"
+                              : isInConsultation
                               ? "bg-amber-100 text-amber-700"
                               : isDone
                               ? "bg-zinc-100 text-zinc-400"
+                              : isSkipped
+                              ? "bg-rose-50 text-rose-400"
                               : "bg-blue-50 text-blue-700"
                           }`}
                         >
@@ -541,34 +812,68 @@ export default function AdminDashboardPage() {
                               hour: "2-digit",
                               minute: "2-digit",
                             })}
+                            {isCalled && row.called_at && (
+                              <span className={`ml-2 font-semibold ${
+                                callTimedOut ? "text-red-500" : "text-orange-600"
+                              }`}>
+                                · Called {Math.floor(secondsCalled / 60)}m{secondsCalled % 60}s ago
+                                {!callTimedOut && ` · ${Math.floor(secondsLeft / 60)}m${secondsLeft % 60}s left`}
+                                {callTimedOut && " · AUTO-SKIP PENDING"}
+                              </span>
+                            )}
+                            {isSkipped && row.skipped_requeued_at && (
+                              <span className="ml-2 text-rose-500 font-semibold">· Re-queued</span>
+                            )}
                           </p>
                         </div>
                       </div>
 
-                      {/* Advance Controls */}
+                      {/* State-machine Controls */}
                       <div className="flex items-center gap-2 self-end sm:self-auto">
                         <span
-                          className={`text-xs font-semibold px-2.5 py-1 rounded-full border capitalize ${
+                          className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
                             STATUS_COLORS[row.status] || ""
                           }`}
                         >
-                          {row.status === "in_progress"
-                            ? "In Progress"
-                            : row.status}
+                          {STATUS_LABELS[row.status] ?? row.status}
                         </span>
 
+                        {/* booked → Call Patient */}
                         {isBooked && (
                           <button
-                            onClick={() => handleStartConsultation(row.id)}
+                            onClick={() => handleCallPatient(row.id)}
                             disabled={isActioning}
                             className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#E63946] hover:bg-red-600 rounded-lg shadow-sm transition-all disabled:opacity-50"
                           >
                             <PlayIcon className="w-3.5 h-3.5" />
-                            {isActioning ? "Starting..." : "Start Consultation"}
+                            {isActioning ? "Calling..." : "Call Patient"}
                           </button>
                         )}
 
-                        {isInProgress && (
+                        {/* called → Patient Present or Skip */}
+                        {isCalled && (
+                          <>
+                            <button
+                              onClick={() => handleConfirmPresent(row.id)}
+                              disabled={isActioning}
+                              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#2A9D8F] hover:bg-emerald-700 rounded-lg shadow-sm transition-all disabled:opacity-50"
+                            >
+                              <CheckSquareIcon className="w-3.5 h-3.5" />
+                              {isActioning ? "Confirming..." : "Patient Present"}
+                            </button>
+                            <button
+                              onClick={() => handleSkip(row.id)}
+                              disabled={isActioning}
+                              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 rounded-lg shadow-sm transition-all disabled:opacity-50"
+                            >
+                              <ClockIcon className="w-3.5 h-3.5" />
+                              {isActioning ? "Skipping..." : "Skip"}
+                            </button>
+                          </>
+                        )}
+
+                        {/* in_consultation → Mark Complete */}
+                        {isInConsultation && (
                           <button
                             onClick={() => handleMarkComplete(row.id)}
                             disabled={isActioning}
@@ -580,8 +885,11 @@ export default function AdminDashboardPage() {
                         )}
 
                         {isDone && (
-                          <span className="text-xs text-zinc-400 italic">
-                            Completed
+                          <span className="text-xs text-zinc-400 italic">Completed</span>
+                        )}
+                        {isSkipped && (
+                          <span className="text-xs text-rose-400 italic">
+                            {row.skipped_requeued_at ? "Skipped · Re-queued" : "Skipped"}
                           </span>
                         )}
                       </div>
@@ -720,6 +1028,12 @@ export default function AdminDashboardPage() {
                               <PlusIcon className="w-5 h-5" />
                             </button>
                           </div>
+                          <button
+                            onClick={() => handleOpenReconcileModal(bed)}
+                            className="w-full mt-4 py-2 px-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-950 text-xs font-semibold rounded-lg border border-zinc-200 transition-colors"
+                          >
+                            Reconcile Now
+                          </button>
                         </div>
                       </div>
                     );
@@ -883,7 +1197,162 @@ export default function AdminDashboardPage() {
             )}
           </div>
         )}
+
+        {/* TAB 4: STAFF INVITES */}
+        {activeTab === "invites" && (
+          <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+              <div>
+                <h3 className="text-base font-bold text-zinc-900">Staff Invite Codes</h3>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Generate single-use codes for staff to register. Codes expire after 48 hours.
+                </p>
+              </div>
+              <button
+                onClick={fetchInvites}
+                disabled={loadingInvites}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 rounded-lg border border-zinc-200 transition-colors"
+              >
+                <RefreshCwIcon className={`w-3.5 h-3.5 ${loadingInvites ? "animate-spin" : ""}`} />
+                Refresh
+              </button>
+            </div>
+
+            {/* Generate invite form */}
+            <div className="px-6 py-4 border-b border-zinc-100 bg-zinc-50">
+              <p className="text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-3">Generate New Invite</p>
+              {inviteError && (
+                <div className="mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-[#E63946]">
+                  {inviteError}
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <div>
+                  <label className="block text-xs text-zinc-500 mb-1">Role</label>
+                  <select
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value as "doctor" | "nurse" | "admin")}
+                    className="px-3 py-2 border border-zinc-300 rounded-lg text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent bg-white"
+                  >
+                    <option value="doctor">Doctor</option>
+                    <option value="nurse">Nurse</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <button
+                  onClick={handleGenerateInvite}
+                  disabled={generatingInvite}
+                  className="mt-5 flex items-center gap-1.5 px-4 py-2 bg-[#E63946] hover:bg-[#d62837] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <KeyIcon className="w-4 h-4" />
+                  {generatingInvite ? "Generating…" : "Generate Code"}
+                </button>
+              </div>
+            </div>
+
+            {/* Invite list */}
+            {loadingInvites ? (
+              <div className="py-12 text-center text-zinc-400 text-sm">Loading invite codes…</div>
+            ) : invites.length === 0 ? (
+              <div className="py-12 text-center text-zinc-400 text-sm">No invite codes generated yet.</div>
+            ) : (
+              <div className="divide-y divide-zinc-100">
+                {invites.map((inv) => {
+                  const expired = new Date(inv.expires_at) < new Date();
+                  return (
+                    <div key={inv.id} className="flex items-center justify-between px-6 py-3 gap-4">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="font-mono text-sm font-bold text-zinc-900 tracking-wider">{inv.code}</div>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${
+                          inv.used
+                            ? "bg-zinc-100 text-zinc-500 border-zinc-200"
+                            : expired
+                            ? "bg-red-50 text-red-600 border-red-200"
+                            : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        }`}>
+                          {inv.used ? "Used" : expired ? "Expired" : "Active"}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 capitalize">
+                          {inv.role}
+                        </span>
+                      </div>
+                      <div className="text-xs text-zinc-400 hidden sm:block whitespace-nowrap">
+                        Expires {new Date(inv.expires_at).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
+                      </div>
+                      <button
+                        onClick={() => handleCopyCode(inv.code)}
+                        disabled={inv.used || expired}
+                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 rounded-lg border border-zinc-200 transition-colors disabled:opacity-30"
+                        title="Copy invite code"
+                      >
+                        <CopyIcon className="w-3.5 h-3.5" />
+                        {copiedCode === inv.code ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </main>
+
+      {/* Reconciliation Modal */}
+      {reconcileBed && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl border border-zinc-200 shadow-lg max-w-sm w-full p-6 space-y-4">
+            <div>
+              <h3 className="text-base font-bold text-zinc-900">
+                Reconcile {reconcileBed.ward_type} Bed Count
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1">
+                Enter the actual physical count of available beds. A &apos;manual_correction&apos; audit entry will be recorded if it differs from the system count ({reconcileBed.available_beds}).
+              </p>
+            </div>
+
+            {reconcileError && (
+              <div className="p-3 bg-red-50 border border-red-200 text-xs text-[#E63946] rounded-lg">
+                {reconcileError}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
+                Actual Physical Available Beds
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={reconcileBed.total_beds}
+                value={physicalCount}
+                onChange={(e) => setPhysicalCount(parseInt(e.target.value) || 0)}
+                className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm text-zinc-950 focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent bg-white"
+              />
+              <p className="text-[10px] text-zinc-400 mt-1">
+                Must be between 0 and total beds ({reconcileBed.total_beds})
+              </p>
+            </div>
+
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setReconcileBed(null)}
+                className="flex-1 py-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs font-semibold rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleReconcileConfirm}
+                disabled={reconciling}
+                className="flex-1 py-2 bg-[#E63946] hover:bg-[#d62837] text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+              >
+                {reconciling ? "Saving..." : "Confirm Count"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

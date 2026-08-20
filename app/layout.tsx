@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import PWARegister from "@/components/PWARegister";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
   title: "CareSync India — Real-Time Smart OPD & Emergency Healthcare",
   description:
     "CareSync India connects patients directly with live doctor OPD queues and emergency hospital bed availability in real time across India — reducing wait times and saving lives.",
+  manifest: "/manifest.json",
   keywords: [
     "CareSync India",
     "CareSync",
@@ -89,12 +91,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <head>
+        <meta name="theme-color" content="#E63946" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className="min-h-full flex flex-col font-sans bg-zinc-50 text-zinc-900 selection:bg-red-100 selection:text-[#E63946]">
+        <PWARegister />
         {children}
       </body>
     </html>

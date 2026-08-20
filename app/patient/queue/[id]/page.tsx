@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
@@ -12,6 +12,8 @@ import {
   AlertCircle as AlertCircleIcon,
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon,
+  Bell as BellIcon,
+  RotateCcw as RotateCcwIcon,
 } from "lucide-react";
 
 interface AppointmentDetail {
@@ -19,11 +21,18 @@ interface AppointmentDetail {
   appointment_date?: string;
   token_number: number;
   status: string;
+  called_at?: string | null;
+  skipped_requeued_at?: string | null;
   created_at: string;
   doctor_id: string;
   hospital_id: string;
   hospitals?: { id: string; name: string; address: string };
-  doctors?: { id: string; full_name: string; specialization: string };
+  doctors?: {
+    id: string;
+    full_name: string;
+    specialization: string;
+    no_show_threshold_seconds?: number;
+  };
 }
 
 interface QueueState {
@@ -32,12 +41,6 @@ interface QueueState {
   now_serving_token: number;
 }
 
-/**
- * Average consultation time per patient in minutes.
- * TODO: In a future release, calculate this from historical appointment data
- * (median time between start_consultation and complete_consultation events
- * for each doctor over the past 30 days) rather than this hardcoded constant.
- */
 const AVG_CONSULTATION_MINUTES = 10;
 
 export default function PatientQueueScreen() {
@@ -52,8 +55,74 @@ export default function PatientQueueScreen() {
   const [error, setError] = useState<string | null>(null);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
 
+  // PWA/Offline state
+  const [cachedTime, setCachedTime] = useState<number | null>(null);
+  const [offlineAgeText, setOfflineAgeText] = useState<string>("");
+  const [reconnectDelay, setReconnectDelay] = useState<number>(2000);
+  const [reconnectTrigger, setReconnectTrigger] = useState(0);
+
+  // Countdown state for the 'called' alert
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Ref to hold the Supabase Realtime channel so we can cleanly unsubscribe
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  /** Start or reset the countdown timer when called_at is set */
+  const startCountdown = useCallback((calledAt: string, thresholdSeconds: number) => {
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    const update = () => {
+      const elapsed = Math.floor((Date.now() - new Date(calledAt).getTime()) / 1000);
+      const left = Math.max(0, thresholdSeconds - elapsed);
+      setCountdown(left);
+      if (left === 0 && countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+    };
+    update();
+    countdownIntervalRef.current = setInterval(update, 1000);
+  }, []);
+
+  /** Stop countdown when no longer needed */
+  const stopCountdown = useCallback(() => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    setCountdown(null);
+  }, []);
+
+  // Initialize: Attempt to restore safe state from localStorage cache
+  useEffect(() => {
+    const cacheKey = `caresync:queue:${appointmentId}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        setCachedTime(parsed.timestamp);
+        setAppointment({
+          id: appointmentId,
+          token_number: parsed.token_number,
+          status: parsed.status,
+          called_at: parsed.called_at,
+          skipped_requeued_at: parsed.skipped_requeued_at,
+          doctor_id: parsed.doctor_id,
+          hospital_id: parsed.hospital_id,
+          created_at: new Date(parsed.timestamp).toISOString(),
+        });
+        setQueueState({
+          doctor_id: parsed.doctor_id,
+          date: new Date(parsed.timestamp).toISOString().split("T")[0],
+          now_serving_token: parsed.now_serving_token,
+        });
+        // We can display the cached data instantly, so we can set loading to false!
+        setLoading(false);
+      } catch (e) {
+        console.error("[cache] Failed to restore state:", e);
+      }
+    }
+  }, [appointmentId]);
 
   // Load user auth
   useEffect(() => {
@@ -66,7 +135,7 @@ export default function PatientQueueScreen() {
     });
   }, [router]);
 
-  // Load appointment details + initial queue_state
+  // Load appointment details + initial queue_state from network
   useEffect(() => {
     if (!appointmentId) return;
 
@@ -76,16 +145,26 @@ export default function PatientQueueScreen() {
         const json = await res.json();
 
         if (!res.ok || !json.appointment) {
-          setError("Appointment not found.");
-          setLoading(false);
+          // If we had cache, don't show full page error unless there is absolutely no data
+          if (!localStorage.getItem(`caresync:queue:${appointmentId}`)) {
+            setError("Appointment not found.");
+          }
           return;
         }
 
         const appt: AppointmentDetail = json.appointment;
         setAppointment(appt);
 
+        // If already in 'called' state on load, start countdown immediately
+        if (appt.status === "called" && appt.called_at) {
+          const threshold = appt.doctors?.no_show_threshold_seconds ?? 180;
+          startCountdown(appt.called_at, threshold);
+        }
+
         // Fetch current queue_state for this doctor + appointment date
-        const apptDate = appt.appointment_date || new Date(appt.created_at).toISOString().split("T")[0];
+        const apptDate =
+          appt.appointment_date ||
+          new Date(appt.created_at).toISOString().split("T")[0];
         const { data: qs, error: qsErr } = await supabase
           .from("queue_state")
           .select("*")
@@ -97,24 +176,75 @@ export default function PatientQueueScreen() {
           setQueueState(qs);
         }
       } catch (e: any) {
-        setError(e.message);
+        console.error("Network fetch failed:", e.message);
       } finally {
         setLoading(false);
       }
     }
 
     fetchAppointment();
-  }, [appointmentId]);
 
-  // Set up Supabase Realtime subscription on queue_state for this doctor
-  // Per Section 6: "Patient's queue screen subscribes to queue_state via
-  // Supabase Realtime — no polling needed."
+    return () => stopCountdown();
+  }, [appointmentId, startCountdown, stopCountdown]);
+
+  // Update Cache in LocalStorage when fresh data arrives
+  // Caches only safe metrics (queue position, status, timestamps). NO patient name/phone.
+  useEffect(() => {
+    if (!appointment) return;
+    const cacheKey = `caresync:queue:${appointmentId}`;
+    const payload = {
+      token_number: appointment.token_number,
+      status: appointment.status,
+      called_at: appointment.called_at,
+      skipped_requeued_at: appointment.skipped_requeued_at,
+      doctor_id: appointment.doctor_id,
+      hospital_id: appointment.hospital_id,
+      now_serving_token: queueState?.now_serving_token ?? 0,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(cacheKey, JSON.stringify(payload));
+    setCachedTime(payload.timestamp);
+  }, [appointment, queueState, appointmentId]);
+
+  // Keep calculating cached data age for the offline/reconnecting banner
+  useEffect(() => {
+    if (cachedTime === null) return;
+    const updateAge = () => {
+      const diffMs = Date.now() - cachedTime;
+      const diffSecs = Math.max(0, Math.floor(diffMs / 1000));
+      if (diffSecs < 60) {
+        setOfflineAgeText(`${diffSecs}s ago`);
+      } else {
+        const diffMins = Math.floor(diffSecs / 60);
+        setOfflineAgeText(`${diffMins} min ago`);
+      }
+    };
+    updateAge();
+    const interval = setInterval(updateAge, 5000);
+    return () => clearInterval(interval);
+  }, [cachedTime]);
+
+  // Set up Supabase Realtime subscription with Exponential Backoff Reconnection
   useEffect(() => {
     if (!appointment) return;
 
-    const apptDate = appointment.appointment_date || new Date(appointment.created_at).toISOString().split("T")[0];
+    const apptDate =
+      appointment.appointment_date ||
+      new Date(appointment.created_at).toISOString().split("T")[0];
 
-    // Subscribe to INSERT / UPDATE events on queue_state for this doctor + date
+    let active = true;
+    let reconnectTimeout: ReturnType<typeof setTimeout>;
+
+    const handleReconnect = () => {
+      if (!active) return;
+      console.log(`[realtime] Connection dropped. Retrying in ${reconnectDelay}ms...`);
+      reconnectTimeout = setTimeout(() => {
+        setReconnectTrigger((prev) => prev + 1);
+        setReconnectDelay((prev) => Math.min(prev * 2, 30000));
+      }, reconnectDelay);
+    };
+
+    // Subscribe to queue_state changes (now_serving_token updates)
     const channel = supabase
       .channel(`queue_state:${appointment.doctor_id}:${apptDate}`)
       .on(
@@ -129,16 +259,24 @@ export default function PatientQueueScreen() {
           const updated = payload.new as QueueState;
           if (updated && updated.date === apptDate) {
             setQueueState(updated);
+            setReconnectDelay(2000); // Reset delay
           }
         }
       )
       .subscribe((status) => {
-        setRealtimeConnected(status === "SUBSCRIBED");
+        if (!active) return;
+        if (status === "SUBSCRIBED") {
+          setRealtimeConnected(true);
+          setReconnectDelay(2000); // Reset delay
+        } else {
+          setRealtimeConnected(false);
+          handleReconnect();
+        }
       });
 
     channelRef.current = channel;
 
-    // Also subscribe to appointments changes so the status badge updates live
+    // Subscribe to own appointment changes (status updates)
     const apptChannel = supabase
       .channel(`appointment:${appointmentId}`)
       .on(
@@ -151,53 +289,89 @@ export default function PatientQueueScreen() {
         },
         (payload) => {
           const updated = payload.new as AppointmentDetail;
-          if (updated) {
-            setAppointment((prev) =>
-              prev ? { ...prev, status: updated.status } : prev
-            );
-          }
+          if (!updated) return;
+
+          setAppointment((prev) => {
+            if (!prev) return prev;
+            const next = { ...prev, ...updated };
+
+            // Entered 'called' state — start countdown
+            if (updated.status === "called" && updated.called_at) {
+              const threshold = prev.doctors?.no_show_threshold_seconds ?? 180;
+              startCountdown(updated.called_at, threshold);
+            }
+
+            // Left 'called' state — stop countdown
+            if (prev.status === "called" && updated.status !== "called") {
+              stopCountdown();
+            }
+
+            setReconnectDelay(2000); // Reset delay
+            return next;
+          });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (!active) return;
+        if (status === "SUBSCRIBED") {
+          setRealtimeConnected(true);
+        } else {
+          setRealtimeConnected(false);
+        }
+      });
 
     return () => {
+      active = false;
+      clearTimeout(reconnectTimeout);
       supabase.removeChannel(channel);
       supabase.removeChannel(apptChannel);
     };
-  }, [appointment, appointmentId]);
+  }, [appointment, appointmentId, startCountdown, stopCountdown, reconnectTrigger]);
 
   // Derived values
   const myToken = appointment?.token_number ?? 0;
   const nowServing = queueState?.now_serving_token ?? 0;
   const tokensAhead = Math.max(0, myToken - nowServing);
-
-  /**
-   * Estimated wait time in minutes.
-   * Formula: (your_token - now_serving_token) * AVG_CONSULTATION_MINUTES
-   * Note: AVG_CONSULTATION_MINUTES is hardcoded at 10 for MVP.
-   * Future improvement: derive this from historical consultation duration data.
-   */
   const estimatedWaitMins = tokensAhead * AVG_CONSULTATION_MINUTES;
 
+  const isCalled = appointment?.status === "called";
+  const isInConsultation =
+    appointment?.status === "in_consultation" || appointment?.status === "in_progress";
+  const isCompleted = appointment?.status === "completed";
+  const isSkipped = appointment?.status === "skipped";
+
   const statusBadge = () => {
-    const s = appointment?.status;
-    if (s === "completed") {
+    if (isCompleted) {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">
           <CheckCircleIcon className="w-3.5 h-3.5" /> Completed
         </span>
       );
     }
-    if (s === "in_progress") {
+    if (isInConsultation) {
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full animate-pulse">
           <span className="w-2 h-2 bg-amber-500 rounded-full inline-block" /> In Consultation
         </span>
       );
     }
+    if (isCalled) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full animate-pulse">
+          <BellIcon className="w-3.5 h-3.5" /> Called
+        </span>
+      );
+    }
+    if (isSkipped) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-100 text-rose-700 text-xs font-bold rounded-full">
+          <RotateCcwIcon className="w-3.5 h-3.5" /> Skipped
+        </span>
+      );
+    }
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full">
-        <span className="w-2 h-2 bg-blue-400 rounded-full inline-block" /> Booked
+        <span className="w-2 h-2 bg-blue-400 rounded-full inline-block" /> Waiting
       </span>
     );
   };
@@ -228,6 +402,11 @@ export default function PatientQueueScreen() {
       </div>
     );
   }
+
+  const threshold = appointment.doctors?.no_show_threshold_seconds ?? 180;
+  const countdownMins = countdown !== null ? Math.floor(countdown / 60) : 0;
+  const countdownSecs = countdown !== null ? countdown % 60 : 0;
+  const countdownExpired = countdown === 0;
 
   return (
     <div className="min-h-screen bg-zinc-50 flex flex-col">
@@ -264,6 +443,78 @@ export default function PatientQueueScreen() {
           )}
         </div>
       </header>
+
+      {/* ===== OFFLINE / RECONNECTING BANNER ===== */}
+      {!realtimeConnected && cachedTime !== null && (
+        <div className="bg-amber-500 text-white text-xs font-bold text-center py-2.5 px-4 flex items-center justify-center gap-2 animate-pulse sticky top-[61px] z-20">
+          <AlertCircleIcon className="w-4 h-4 shrink-0" />
+          <span>Showing last known data from {offlineAgeText} — reconnecting...</span>
+        </div>
+      )}
+
+      {/* ===== CALLED ALERT OVERLAY ===== */}
+      {isCalled && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-0">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative bg-white rounded-2xl shadow-2xl border-2 border-orange-400 max-w-sm w-full mx-auto p-6 text-center space-y-4 z-10">
+            {/* Pulsing bell icon */}
+            <div className="flex justify-center">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center animate-bounce">
+                <BellIcon className="w-8 h-8 text-orange-500" />
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-black text-zinc-900">You&apos;re Being Called!</h2>
+              <p className="text-sm text-zinc-600 mt-1">
+                Please proceed to the doctor&apos;s room immediately.
+              </p>
+            </div>
+
+            {/* Countdown timer */}
+            <div className={`rounded-xl px-4 py-3 ${countdownExpired ? "bg-red-50 border border-red-200" : "bg-orange-50 border border-orange-200"}`}>
+              {countdownExpired ? (
+                <p className="text-sm font-bold text-red-600">
+                  Time&apos;s up — checking if you&apos;ve been re-queued…
+                </p>
+              ) : (
+                <>
+                  <p className={`text-4xl font-black tabular-nums ${countdown !== null && countdown <= 30 ? "text-red-600" : "text-orange-600"}`}>
+                    {String(countdownMins).padStart(2, "0")}:{String(countdownSecs).padStart(2, "0")}
+                  </p>
+                  <p className="text-xs text-orange-700 font-semibold mt-1">
+                    Time remaining to check in
+                  </p>
+                </>
+              )}
+            </div>
+
+            <p className="text-xs text-zinc-500">
+              Token #{String(myToken).padStart(2, "0")} &bull; {appointment.doctors?.full_name}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ===== SKIPPED NOTIFICATION ===== */}
+      {isSkipped && (
+        <div className="mx-4 mt-4 px-4 py-3 bg-rose-50 border border-rose-300 rounded-xl flex items-start gap-3">
+          <RotateCcwIcon className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-rose-800">You were marked absent</p>
+            {appointment.skipped_requeued_at ? (
+              <p className="text-xs text-rose-600 mt-0.5">
+                You&apos;ve been re-queued at the end of the line. Check your new token below or refresh your dashboard.
+              </p>
+            ) : (
+              <p className="text-xs text-rose-600 mt-0.5">
+                Your token was skipped. Please contact the front desk if you&apos;re still at the hospital.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <main className="max-w-2xl mx-auto w-full px-4 py-8 flex-1 space-y-5">
         {/* Appointment Identity Card */}
@@ -305,7 +556,9 @@ export default function PatientQueueScreen() {
             </div>
             <div
               className={`rounded-xl p-4 text-center border ${
-                myToken === nowServing && appointment.status === "in_progress"
+                isCalled
+                  ? "bg-orange-50 border-orange-200"
+                  : isInConsultation
                   ? "bg-amber-50 border-amber-200"
                   : "bg-zinc-50 border-zinc-200"
               }`}
@@ -315,7 +568,9 @@ export default function PatientQueueScreen() {
               </span>
               <span
                 className={`block text-5xl font-black ${
-                  myToken === nowServing && appointment.status === "in_progress"
+                  isCalled
+                    ? "text-orange-600 animate-pulse"
+                    : isInConsultation
                     ? "text-amber-600 animate-pulse"
                     : "text-zinc-800"
                 }`}
@@ -325,37 +580,47 @@ export default function PatientQueueScreen() {
             </div>
           </div>
 
-          {/* Progress bar: visual gap between now_serving and your token */}
-          <div className="mb-5">
-            <div className="flex justify-between text-xs text-zinc-500 mb-1.5">
-              <span>Tokens ahead of you</span>
-              <span className="font-semibold text-zinc-700">
-                {tokensAhead} token{tokensAhead !== 1 ? "s" : ""}
-              </span>
+          {/* Progress bar */}
+          {!isCompleted && !isSkipped && (
+            <div className="mb-5">
+              <div className="flex justify-between text-xs text-zinc-500 mb-1.5">
+                <span>Tokens ahead of you</span>
+                <span className="font-semibold text-zinc-700">
+                  {tokensAhead} token{tokensAhead !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <div className="w-full h-3 bg-zinc-100 rounded-full overflow-hidden">
+                {myToken > 0 && (
+                  <div
+                    className="h-full bg-[#2A9D8F] rounded-full transition-all duration-700 ease-out"
+                    style={{
+                      width: `${Math.min(100, Math.max(5, (nowServing / myToken) * 100))}%`,
+                    }}
+                  />
+                )}
+              </div>
             </div>
-            <div className="w-full h-3 bg-zinc-100 rounded-full overflow-hidden">
-              {myToken > 0 && (
-                <div
-                  className="h-full bg-[#2A9D8F] rounded-full transition-all duration-700 ease-out"
-                  style={{
-                    width: `${Math.min(100, Math.max(5, (nowServing / myToken) * 100))}%`,
-                  }}
-                />
-              )}
-            </div>
-          </div>
+          )}
 
-          {/* Estimated wait time */}
+          {/* Status message */}
           <div className="flex items-center gap-3 bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3">
             <ClockIcon className="w-5 h-5 text-zinc-500 shrink-0" />
             <div>
-              {appointment.status === "completed" ? (
+              {isCompleted ? (
                 <p className="text-sm font-semibold text-emerald-700">
                   Consultation complete. Thank you!
                 </p>
-              ) : appointment.status === "in_progress" ? (
+              ) : isSkipped ? (
+                <p className="text-sm font-semibold text-rose-600">
+                  You were marked absent. Please check with the front desk.
+                </p>
+              ) : isInConsultation ? (
                 <p className="text-sm font-semibold text-amber-700">
                   Your consultation is in progress now!
+                </p>
+              ) : isCalled ? (
+                <p className="text-sm font-semibold text-orange-700">
+                  🔔 You&apos;re being called — please go to the doctor&apos;s room!
                 </p>
               ) : tokensAhead === 0 ? (
                 <p className="text-sm font-semibold text-[#2A9D8F]">
@@ -368,11 +633,8 @@ export default function PatientQueueScreen() {
                     <strong>~{estimatedWaitMins} min</strong>
                   </p>
                   <p className="text-xs text-zinc-400 mt-0.5">
-                    {tokensAhead} token{tokensAhead !== 1 ? "s" : ""} ahead ×{" "}
+                    {tokensAhead} token{tokensAhead !== 1 ? "s" : ""} ahead &bull;{" "}
                     {AVG_CONSULTATION_MINUTES} min avg
-                    {/* TODO: Replace AVG_CONSULTATION_MINUTES (hardcoded 10 min) with
-                        doctor-specific median consultation time derived from historical
-                        completed appointment data (start → complete timestamps). */}
                   </p>
                 </>
               )}

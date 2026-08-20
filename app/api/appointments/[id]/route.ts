@@ -21,12 +21,14 @@ export async function GET(
         appointment_date,
         token_number,
         status,
+        called_at,
+        skipped_requeued_at,
         created_at,
         patient_id,
         doctor_id,
         hospital_id,
         hospitals ( id, name, address ),
-        doctors ( id, full_name, specialization )
+        doctors ( id, full_name, specialization, no_show_threshold_seconds )
       `)
       .eq("id", id)
       .maybeSingle();
@@ -40,12 +42,14 @@ export async function GET(
           appointment_date,
           token_number,
           status,
+          called_at,
+          skipped_requeued_at,
           created_at,
           patient_id,
           doctor_id,
           hospital_id,
           hospitals ( id, name, address ),
-          doctors ( id, full_name, specialization )
+          doctors ( id, full_name, specialization, no_show_threshold_seconds )
         `)
         .eq("id", id)
         .maybeSingle();

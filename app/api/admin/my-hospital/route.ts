@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
     const { data: hospital, error: hospErr } = await supabaseAdmin
       .from("hospitals")
-      .select("id, name, address")
+      .select("id, name, address, status, license_number, contact_info")
       .eq("id", userRow.hospital_id)
       .single();
 

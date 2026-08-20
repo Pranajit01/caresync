@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     if (!error && data.user) {
       const role = data.user.user_metadata?.role ?? "patient";
       const redirectPath =
-        role === "hospital_admin" || role === "super_admin"
+        role !== "patient"
           ? "/admin/dashboard"
           : "/patient/dashboard";
 

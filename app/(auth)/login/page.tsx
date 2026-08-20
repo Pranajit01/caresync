@@ -32,7 +32,7 @@ function LoginForm() {
 
       if (data.user) {
         const role = data.user.user_metadata?.role || initialRole || "patient";
-        if (role === "hospital_admin" || role === "super_admin") {
+        if (role !== "patient") {
           router.push("/admin/dashboard");
         } else {
           router.push("/patient/dashboard");

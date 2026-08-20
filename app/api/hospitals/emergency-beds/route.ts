@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
@@ -24,6 +25,7 @@ export async function GET() {
           updated_at
         )
       `)
+      .eq("status", "verified")
       .order("name", { ascending: true });
 
     if (hospErr) {
@@ -31,7 +33,27 @@ export async function GET() {
       return NextResponse.json({ error: hospErr.message }, { status: 500 });
     }
 
-    return NextResponse.json({ hospitals: hospitals || [] });
+    // Fetch the last audit log for each hospital
+    const { data: logs } = await supabaseAdmin
+      .from("bed_audit_log")
+      .select("hospital_id, created_at")
+      .order("created_at", { ascending: false });
+
+    const lastVerifiedMap: Record<string, string> = {};
+    if (logs) {
+      for (const log of logs) {
+        if (!lastVerifiedMap[log.hospital_id]) {
+          lastVerifiedMap[log.hospital_id] = log.created_at;
+        }
+      }
+    }
+
+    const hospitalsWithLog = (hospitals || []).map((h) => ({
+      ...h,
+      last_verified_at: lastVerifiedMap[h.id] || null,
+    }));
+
+    return NextResponse.json({ hospitals: hospitalsWithLog });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
