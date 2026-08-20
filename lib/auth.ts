@@ -103,3 +103,39 @@ export async function getCurrentUser() {
     fullName,
   };
 }
+
+/**
+ * Send a 6-digit one-time passcode to the user's email.
+ * shouldCreateUser: false ensures OTP can't be used to bypass verified registration.
+ */
+export async function sendSignInOtp(email: string) {
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false,
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
+/**
+ * Verify the 6-digit OTP code submitted by the user.
+ */
+export async function verifySignInOtp(email: string, token: string) {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "email",
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
