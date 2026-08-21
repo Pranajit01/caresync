@@ -8,37 +8,34 @@ CareSync is a full-stack, real-time web application for outpatient department (O
 
 CareSync operates as a dual-portal application with separate views for patients and hospital administration staff.
 
+```mermaid
+graph TD
+    subgraph ClientLayer["Client Layer & User Portals"]
+        P["Patient Portal (/patient)<br/>• OPD Appointment Booking<br/>• Live Queue Tracking<br/>• GIS Emergency Bed Finder<br/>• Account Recovery (OTP)"]
+        A["Hospital Admin Portal (/admin)<br/>• Live OPD Queue Management<br/>• Bed Inventory Delta Updates<br/>• Facility Performance Analytics"]
+    end
+
+    subgraph AppLayer["Application Layer (Next.js 16 App Router)"]
+        API["REST API Route Handlers<br/>• /api/appointments/*<br/>• /api/admin/*<br/>• /api/hospitals/*<br/>• /api/cron/auto-skip"]
+        AUTH_CB["Auth & Session Middleware<br/>• middleware.ts<br/>• /auth/callback"]
+    end
+
+    subgraph DataLayer["Data & Realtime Layer (Supabase)"]
+        DB[("Supabase Postgres Database<br/>• Row Level Security (RLS)<br/>• Tables: users, hospitals, doctors,<br/>appointments, queue_state, beds")]
+        AUTH["Supabase Auth Engine<br/>• Cookie-Based Sessions<br/>• Email Verification & Recovery"]
+        RT["Supabase Realtime WebSockets<br/>• Channel: queue_state<br/>• Channel: beds<br/>• Channel: appointments"]
+    end
+
+    P -->|HTTP / REST| API
+    A -->|HTTP / REST| API
+    P -->|WebSocket Subscription| RT
+    A -->|WebSocket Subscription| RT
+    P -->|Auth Route Handling| AUTH_CB
+    A -->|Auth Route Handling| AUTH_CB
+    AUTH_CB -->|Session Management| AUTH
+    API -->|RLS-Scoped Postgres Queries| DB
 ```
-                   ┌──────────────────────────────────────────┐
-                   │             CareSync Platform            │
-                   └────────────────────┬─────────────────────┘
-                                        │
-             ┌──────────────────────────┴──────────────────────────┐
-             ▼                                                     ▼
-┌──────────────────────────┐                             ┌──────────────────────────┐
-│      Patient Portal      │                             │     Hospital Admin       │
-├──────────────────────────┤                             ├──────────────────────────┤
-│ - OPD Appointment Booking│                             │ - Live Queue Management  │
-│ - Live Queue Tracking    │                             │ - Bed Occupancy Delta    │
-│ - Emergency Bed Finder   │                             │ - Facility Analytics     │
-│ - Account Recovery (OTP) │                             │ - Staff Administration   │
-└────────────┬─────────────┘                             └────────────┬─────────────┘
-             │                                                        │
-             └──────────────────────────┬─────────────────────────────┘
-                                        │
-                                        ▼
-                      ┌───────────────────────────────────┐
-                      │    Next.js 16 (App Router / API)  │
-                      └─────────────────┬─────────────────┘
-                                        │
-                     ┌──────────────────┴──────────────────┐
-                     ▼                                     ▼
-      ┌─────────────────────────────┐       ┌─────────────────────────────┐
-      │  Supabase Postgres & Auth   │       │   Supabase Realtime Engine  │
-      │  - Row Level Security (RLS) │       │   - Live Queue Updates      │
-      │  - Atomic RPC Functions     │       │   - Live Bed Availability   │
-      └─────────────────────────────┘       └─────────────────────────────┘
-```
+
 
 ### Core Portals
 
