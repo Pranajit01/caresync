@@ -61,11 +61,20 @@ export async function createAdminClient() {
 /**
  * True service-role admin client — bypasses RLS.
  * Uses SUPABASE_SERVICE_ROLE_KEY. Only call from server-side API routes.
+ * NOTE: SUPABASE_SERVICE_ROLE_KEY must be set in Vercel environment variables.
  */
-const supabaseServiceRoleKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseServiceRoleKey) {
+  console.error(
+    "[CareSync] CRITICAL: SUPABASE_SERVICE_ROLE_KEY is not set. " +
+    "Hospital signup and admin APIs will fail with RLS errors. " +
+    "Add this key in Vercel Dashboard → Settings → Environment Variables."
+  );
+}
 
 export const supabaseAdmin = createSupabaseClient(
   supabaseUrl,
-  supabaseServiceRoleKey
+  // Use service role key if present; fall back only in dev (never in production without it)
+  supabaseServiceRoleKey || supabaseAnonKey
 );
