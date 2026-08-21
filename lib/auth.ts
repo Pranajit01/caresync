@@ -31,7 +31,7 @@ export async function signUpUser({
   const origin =
     typeof window !== "undefined"
       ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL || "https://caresync.vercel.app";
+      : process.env.NEXT_PUBLIC_APP_URL || "https://caresync-india.vercel.app";
 
   const { data, error } = await supabase.auth.signUp({
     email,
