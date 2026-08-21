@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signInUser } from "@/lib/auth";
-import { Suspense } from "react";
+import dynamic from "next/dynamic";
+
+const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
+  ssr: false,
+  loading: () => <div className="h-64 bg-zinc-100 rounded-xl flex items-center justify-center text-zinc-400 text-sm">Loading map…</div>,
+});
 
 type SignupFlow = "patient" | "staff" | "hospital";
 
@@ -29,6 +34,7 @@ function SignupForm() {
   const [hospitalAddress, setHospitalAddress] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
+  const [locationAddress, setLocationAddress] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
   const [contactInfo, setContactInfo] = useState("");
 
@@ -54,7 +60,7 @@ function SignupForm() {
         body.inviteCode = inviteCode;
       } else if (flow === "hospital") {
         body.hospitalName = hospitalName;
-        body.hospitalAddress = hospitalAddress;
+        body.hospitalAddress = hospitalAddress || locationAddress;
         body.latitude = latitude;
         body.longitude = longitude;
         body.licenseNumber = licenseNumber;
@@ -227,19 +233,23 @@ function SignupForm() {
                   placeholder="Full address"
                   className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">Latitude</label>
-                  <input type="number" step="any" value={latitude} onChange={(e) => setLatitude(e.target.value)}
-                    placeholder="22.5726"
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">Longitude</label>
-                  <input type="number" step="any" value={longitude} onChange={(e) => setLongitude(e.target.value)}
-                    placeholder="88.3639"
-                    className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900" />
-                </div>
+
+              {/* Map Location Picker */}
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-2">📍 Pin Hospital Location on Map</label>
+                <LocationPicker
+                  latitude={latitude}
+                  longitude={longitude}
+                  onLocationChange={(lat, lng, addr) => {
+                    setLatitude(lat);
+                    setLongitude(lng);
+                    if (addr) {
+                      setLocationAddress(addr);
+                      // Auto-fill address field if empty
+                      if (!hospitalAddress) setHospitalAddress(addr);
+                    }
+                  }}
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">Registration / License Number</label>
