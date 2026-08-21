@@ -7,21 +7,22 @@ CareSync is a full-stack, real-time web application for outpatient department (O
 ## Competitive Advantage & Market Matrix
 
 ### Industry Context & Market Recognition
-Online doctor appointment booking (e.g., Practo, Apollo 24|7), physical waiting-room token boards (e.g., Qmatic), and municipal emergency bed dashboards already exist in the healthcare industry. However, existing market solutions operate in silos and suffer from critical operational loopholes that result in severe hospital overcrowding and delayed emergency admissions.
+Online doctor appointment booking (e.g., Practo, Apollo 24|7), OPD eXpress/kiosk platforms (e.g., OPDX), physical waiting-room token boards (e.g., Qmatic), and municipal emergency bed dashboards already exist in the healthcare industry. However, existing market solutions operate in silos and suffer from critical operational loopholes that result in severe hospital overcrowding and delayed emergency admissions.
 
 CareSync directly addresses these competitor loopholes by unifying **Live OPD Telemetry** and **Atomic Emergency Bed Inventory** into a single, zero-hardware cloud platform.
 
 ### Feature & Capability Comparison
 
-| Feature / Capability | Practo / Apollo 24\|7 | Physical Token Boards (Qmatic) | Govt Emergency Portals | 🏥 **CareSync (Our Platform)** |
-| --- | --- | --- | --- | --- |
-| **OPD Appointment Booking** | ✅ Static Time Slots | ❌ No pre-booking | ❌ No booking | ✅ **Dynamic Token-Based Booking** |
-| **Live OPD Telemetry** | ❌ None (Static Arrival Time) | ⚠️ In-Room TV Only | ❌ None | ✅ **Real-Time WebSockets (`now_serving_token`)** |
-| **Emergency Bed Availability** | ❌ No Bed Tracking | ❌ None | ⚠️ Stale Manual Daily Uploads | ✅ **Live Atomic Inventory Updates (`+1` / `-1`)** |
-| **Ward-Level Granularity** | ❌ None | ❌ None | ⚠️ Aggregate Counts Only | ✅ **ICU, Emergency & General Ward Breakdown** |
-| **Geospatial GIS Mapping** | ⚠️ Text List | ❌ None | ⚠️ Basic Map Pins | ✅ **Interactive Leaflet/OpenStreetMap Location Radar** |
-| **Hardware Requirement** | ❌ None | ❌ Expensive In-Room Kiosks | ❌ None | ✅ **Zero Hardware (100% Cloud Web/PWA)** |
-| **Waiting Hall Overcrowding** | ❌ High (2+ hr wait in hall) | ❌ High (Trapped in hall) | ❌ N/A | ✅ **Zero Overcrowding (Virtual Outdoor Queueing)** |
+| Feature / Capability | Practo / Apollo 24\|7 | OPDX Systems | Physical Token Boards (Qmatic) | Govt Emergency Portals | 🏥 **CareSync (Our Platform)** |
+| --- | --- | --- | --- | --- | --- |
+| **OPD Appointment Booking** | ✅ Static Time Slots | ⚠️ In-Hospital Kiosks | ❌ No pre-booking | ❌ No booking | ✅ **Dynamic Token-Based Booking** |
+| **Live OPD Telemetry** | ❌ None (Static Arrival Time) | ⚠️ In-Lobby Displays | ⚠️ In-Room TV Only | ❌ None | ✅ **Real-Time WebSockets (`now_serving_token`)** |
+| **Emergency Bed Availability** | ❌ No Bed Tracking | ❌ No Bed Tracking | ❌ None | ⚠️ Stale Manual Daily Uploads | ✅ **Live Atomic Inventory Updates (`+1` / `-1`)** |
+| **Ward-Level Granularity** | ❌ None | ❌ None | ❌ None | ⚠️ Aggregate Counts Only | ✅ **ICU, Emergency & General Ward Breakdown** |
+| **Geospatial GIS Mapping** | ⚠️ Text List | ❌ None | ❌ None | ⚠️ Basic Map Pins | ✅ **Interactive Leaflet/OpenStreetMap Location Radar** |
+| **Hardware Requirement** | ❌ None | ❌ Lobby Touch Kiosks & Printers | ❌ Expensive In-Room Kiosks | ❌ None | ✅ **Zero Hardware (100% Cloud Web/PWA)** |
+| **Multi-Hospital Network** | ⚠️ Directory List | ❌ Single-Hospital Silos | ❌ Single Hospital | ⚠️ Static Municipal List | ✅ **Unified Regional Real-Time Network** |
+| **Waiting Hall Overcrowding** | ❌ High (2+ hr wait in hall) | ⚠️ Medium (Lobby overcrowding) | ❌ High (Trapped in hall) | ❌ N/A | ✅ **Zero Overcrowding (Virtual Outdoor Queueing)** |
 
 ---
 
@@ -31,15 +32,19 @@ CareSync directly addresses these competitor loopholes by unifying **Live OPD Te
 * **The Competitor Flaw:** Traditional apps assign patients a fixed time slot (e.g., `10:30 AM`). When doctor delays occur (due to emergency surgeries or complex consultations), patients arrive on time but are forced to sit in crowded, unventilated waiting halls for 2–3 hours, creating high cross-infection risks.
 * **How CareSync Solved It:** CareSync replaces static appointment times with **Live WebSocket Telemetry**. Using Supabase Realtime subscriptions on the `queue_state` table, the platform streams the exact `now_serving_token` directly to the patient's smartphone. Patients can wait safely in outdoor areas, vehicles, or nearby cafes and arrive at the doctor's chamber exactly when their token is 2 slots away.
 
-#### 2. Loophole: Stale & Misleading Emergency Bed Data (Government Portals)
+#### 2. Loophole: Pure OPD Focus & Zero Emergency Bed Visibility (OPDX Systems)
+* **The Competitor Flaw:** OPDX and lobby kiosk platforms focus exclusively on OPD token issuance inside hospital lobbies. They completely ignore emergency bed availability, leaving critical patients unable to locate available ICU or Emergency ward beds during urgent health crises.
+* **How CareSync Solved It:** CareSync implements a **Unified Dual-Core Engine**. It seamlessly links live OPD queue telemetry with atomic emergency bed tracking across ICU, Emergency, and General wards, mapped dynamically on an interactive Leaflet/OpenStreetMap GIS radar.
+
+#### 3. Loophole: Stale & Misleading Emergency Bed Data (Government Portals)
 * **The Competitor Flaw:** Existing municipal bed trackers rely on manual CSV uploads or portal entries updated once or twice a day. During medical emergencies, families drive critical patients to hospitals showing "available ICU beds", only to discover the beds were filled hours prior.
 * **How CareSync Solved It:** CareSync implements **Atomic Bed Inventory Deltas & Real-Time Push Subscriptions**. Hospital staff perform instant `+1` / `-1` bed adjustments via RLS-protected API routes (`/api/admin/beds/update`). These changes broadcast instantly to Leaflet/OpenStreetMap GIS map markers across all patient devices, eliminating data lag during critical triage.
 
-#### 3. Loophole: Expensive Physical Hardware & In-Room Lock-In (Qmatic / Token LCDs)
-* **The Competitor Flaw:** Legacy queue management systems require proprietary on-premises servers, ticket printing kiosks, and TV display monitors inside waiting rooms. Patients cannot leave the waiting room without risking missing their token call.
+#### 4. Loophole: Expensive Physical Kiosks & In-Room Lock-In (OPDX / Qmatic / Token LCDs)
+* **The Competitor Flaw:** Legacy queue management systems and OPDX setups require proprietary on-premises servers, lobby touch-screen kiosks, ticket printing hardware, and TV display monitors inside waiting rooms. Patients cannot leave the waiting area without risking missing their token call.
 * **How CareSync Solved It:** CareSync is **100% Cloud-Native & PWA-Enabled**. Built using Next.js 16 App Router, Service Workers (`sw.js`), and Web App Manifest (`manifest.json`), the platform turns any mobile device or browser into a live queue tracker—requiring zero hardware installation for hospitals and allowing complete mobility for patients.
 
-#### 4. Loophole: Stagnant Queues Caused by No-Show Patients
+#### 5. Loophole: Stagnant Queues Caused by No-Show Patients
 * **The Competitor Flaw:** When a patient books a slot but fails to show up, traditional queues freeze or require manual staff interventions to manually clear every missing token.
 * **How CareSync Solved It:** CareSync features an **Automated Background Cron Engine**. An automated endpoint (`/api/cron/auto-skip`) configured via `vercel.json` periodically scans active OPD queues, automatically flagging and advancing stagnant tokens after configurable inactivity thresholds.
 
