@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signInUser, sendSignInOtp, verifySignInOtp } from "@/lib/auth";
+import { signInUser, sendPasswordReset, verifyRecoveryOtp } from "@/lib/auth";
 
 function LoginForm() {
   const router = useRouter();
@@ -78,8 +78,8 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      await sendSignInOtp(email);
-      setOtpSentMessage(`A 6-digit passcode has been sent to ${email}.`);
+      await sendPasswordReset(email);
+      setOtpSentMessage(`A password reset link / code has been sent to ${email}.`);
       setOtpStep(2);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -92,7 +92,7 @@ function LoginForm() {
           setError(msg);
         }
       } else {
-        setError("Failed to send passcode. Try again.");
+        setError("Failed to send reset code. Try again.");
       }
     } finally {
       setLoading(false);
@@ -106,20 +106,14 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const data = await verifySignInOtp(email, otpToken);
+      const data = await verifyRecoveryOtp(email, otpToken);
 
       if (data.user) {
-        const role = data.user.user_metadata?.role || initialRole || "patient";
-        if (role !== "patient") {
-          router.push("/admin/dashboard");
-        } else {
-          router.push("/patient/dashboard");
-        }
-        router.refresh();
+        router.push("/login/reset-password");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message.includes("invalid") ? "Incorrect or expired passcode. Please try again." : err.message);
+        setError(err.message.includes("invalid") ? "Incorrect or expired reset code. Please try again." : err.message);
       } else {
         setError("Verification failed. Please try again.");
       }
@@ -237,7 +231,7 @@ function LoginForm() {
                   className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900"
                 />
                 <p className="text-[11px] text-zinc-400 mt-1">
-                  Enter your email. If registered, we will send a 6-digit login passcode.
+                  Enter your email. We will send a 6-digit password reset code / link to your inbox.
                 </p>
               </div>
 
@@ -246,7 +240,7 @@ function LoginForm() {
                 disabled={loading}
                 className="w-full py-2.5 px-4 bg-[#E63946] hover:bg-[#d62837] text-white font-medium text-sm rounded-lg transition-colors shadow-xs disabled:opacity-50"
               >
-                {loading ? "Sending Code…" : "Send One-Time Code"}
+                {loading ? "Sending Code…" : "Send Reset Code / Link"}
               </button>
 
               <div className="text-center mt-3">
@@ -266,7 +260,7 @@ function LoginForm() {
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
-                  6-Digit Verification Code
+                  6-Digit Reset Code
                 </label>
                 <input
                   type="text"
@@ -285,7 +279,7 @@ function LoginForm() {
                 disabled={loading}
                 className="w-full py-2.5 px-4 bg-[#2A9D8F] hover:bg-emerald-700 text-white font-medium text-sm rounded-lg transition-colors shadow-xs disabled:opacity-50"
               >
-                {loading ? "Verifying…" : "Verify & Log In"}
+                {loading ? "Verifying…" : "Verify Code"}
               </button>
 
               <div className="flex justify-between items-center text-xs mt-3">

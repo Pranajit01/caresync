@@ -18,6 +18,10 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
+      if (next === "/login/reset-password") {
+        return NextResponse.redirect(`${origin}${next}`);
+      }
+
       const role = data.user.user_metadata?.role ?? "patient";
       const redirectPath =
         role !== "patient"
