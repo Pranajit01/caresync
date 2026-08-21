@@ -141,10 +141,17 @@ export async function verifySignInOtp(email: string, token: string) {
 }
 
 /**
- * Send password reset 6-digit OTP code using Supabase.
+ * Send a 6-digit OTP code to the user's email for password reset.
+ * Uses signInWithOtp — works on Supabase free tier without template changes.
+ * shouldCreateUser: false prevents account creation via this route.
  */
 export async function sendPasswordReset(email: string) {
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+  const { data, error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false,
+    },
+  });
 
   if (error) {
     throw new Error(error.message);
@@ -186,21 +193,32 @@ export async function updatePassword(password: string) {
 }
 
 /**
- * Complete password reset using 6-digit OTP code and new password in a single step.
+ * Complete password reset in one step:
+ * 1. Verify the 6-digit OTP sent via signInWithOtp (type: 'email')
+ * 2. Update password
+ * 3. Sign out so user logs in fresh with new credentials
  */
 export async function resetPasswordWithOtp(email: string, token: string, newPassword: string) {
-  // 1. Verify 6-digit recovery OTP code
+  // 1. Verify the 6-digit OTP code (type must be 'email' to match signInWithOtp)
   const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
     email,
     token,
-    type: "recovery",
+    type: "email",
   });
 
   if (verifyError) {
-    throw new Error(verifyError.message || "Invalid or expired 6-digit reset code.");
+    throw new Error(
+      verifyError.message?.includes("expired") || verifyError.message?.includes("invalid")
+        ? "Invalid or expired code. Please request a new 6-digit code."
+        : verifyError.message || "Verification failed. Please try again."
+    );
   }
 
-  // 2. Update user's password in database
+  if (!verifyData.user) {
+    throw new Error("Could not verify user. Please request a new code.");
+  }
+
+  // 2. Update user's password in Supabase database
   const { data: updateData, error: updateError } = await supabase.auth.updateUser({
     password: newPassword,
   });
@@ -209,7 +227,7 @@ export async function resetPasswordWithOtp(email: string, token: string, newPass
     throw new Error(updateError.message || "Failed to update password. Please try again.");
   }
 
-  // 3. Sign out after updating password so the session is clean for logging in with new credentials
+  // 3. Sign out — user must log in fresh with their new password
   await supabase.auth.signOut();
 
   return updateData;
