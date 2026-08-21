@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
-      if (next === "/login/reset-password") {
+      if (next && next !== "/" && next.startsWith("/")) {
         return NextResponse.redirect(`${origin}${next}`);
       }
 

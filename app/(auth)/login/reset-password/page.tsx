@@ -23,6 +23,18 @@ export default function ResetPasswordPage() {
       }
     });
 
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const code = searchParams.get("code");
+      if (code) {
+        supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+          if (error) {
+            console.error("Client code exchange error:", error);
+          }
+        });
+      }
+    }
+
     return () => {
       subscription.unsubscribe();
     };
