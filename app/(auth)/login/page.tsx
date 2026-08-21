@@ -18,7 +18,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(
     callbackError === "auth_callback_failed"
-      ? "Email confirmation failed. Please try logging in directly."
+      ? "Password reset link or email token expired or invalid. Please request a new link."
       : null
   );
   const [loading, setLoading] = useState(false);
