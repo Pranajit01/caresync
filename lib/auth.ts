@@ -141,17 +141,10 @@ export async function verifySignInOtp(email: string, token: string) {
 }
 
 /**
- * Send password reset email using Supabase.
+ * Send password reset 6-digit OTP code using Supabase.
  */
 export async function sendPasswordReset(email: string) {
-  const origin =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL || "https://caresync-india.vercel.app";
-
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/login/reset-password`,
-  });
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email);
 
   if (error) {
     throw new Error(error.message);
@@ -191,4 +184,35 @@ export async function updatePassword(password: string) {
 
   return data;
 }
+
+/**
+ * Complete password reset using 6-digit OTP code and new password in a single step.
+ */
+export async function resetPasswordWithOtp(email: string, token: string, newPassword: string) {
+  // 1. Verify 6-digit recovery OTP code
+  const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "recovery",
+  });
+
+  if (verifyError) {
+    throw new Error(verifyError.message || "Invalid or expired 6-digit reset code.");
+  }
+
+  // 2. Update user's password in database
+  const { data: updateData, error: updateError } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (updateError) {
+    throw new Error(updateError.message || "Failed to update password. Please try again.");
+  }
+
+  // 3. Sign out after updating password so the session is clean for logging in with new credentials
+  await supabase.auth.signOut();
+
+  return updateData;
+}
+
 

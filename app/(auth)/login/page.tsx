@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signInUser, sendPasswordReset, verifyRecoveryOtp } from "@/lib/auth";
+import { signInUser, sendPasswordReset, resetPasswordWithOtp } from "@/lib/auth";
 
 function LoginForm() {
   const router = useRouter();
@@ -18,21 +18,25 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(
     callbackError === "auth_callback_failed"
-      ? "Password reset link or email token expired or invalid. Please request a new link."
+      ? "Password reset token expired or invalid. Please request a new 6-digit code below."
       : null
   );
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Passwordless OTP recovery/login states
   const [loginMethod, setLoginMethod] = useState<"password" | "otp">("password");
-  const [otpStep, setOtpStep] = useState<1 | 2>(1); // 1: input email, 2: input 6-digit code
+  const [otpStep, setOtpStep] = useState<1 | 2>(1); // 1: input email, 2: input 6-digit code + new password
   const [otpToken, setOtpToken] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [otpSentMessage, setOtpSentMessage] = useState<string | null>(null);
 
   // Handle Standard Password Login
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
     setLoading(true);
 
     try {
@@ -75,11 +79,12 @@ function LoginForm() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
     setLoading(true);
 
     try {
       await sendPasswordReset(email);
-      setOtpSentMessage(`A password reset link / code has been sent to ${email}.`);
+      setOtpSentMessage(`A 6-digit password reset code has been sent to ${email}. Check your email inbox.`);
       setOtpStep(2);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -92,30 +97,51 @@ function LoginForm() {
           setError(msg);
         }
       } else {
-        setError("Failed to send reset code. Try again.");
+        setError("Failed to send 6-digit code. Try again.");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle OTP verification (Step 2)
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  // Handle Code-based Reset Password (Step 2)
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
+
+    if (newPassword.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match. Please verify both password fields.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const data = await verifyRecoveryOtp(email, otpToken);
-
-      if (data.user) {
-        router.push("/login/reset-password");
-      }
+      await resetPasswordWithOtp(email, otpToken, newPassword);
+      setSuccessMessage("Password reset successfully! Please log in with your new credentials.");
+      setLoginMethod("password");
+      setPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setOtpToken("");
+      setOtpStep(1);
+      setOtpSentMessage(null);
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message.includes("invalid") ? "Incorrect or expired reset code. Please try again." : err.message);
+        const msg = err.message;
+        if (msg.toLowerCase().includes("invalid") || msg.toLowerCase().includes("expired")) {
+          setError("Invalid or expired 6-digit reset code. Please check your code or request a new one.");
+        } else {
+          setError(msg);
+        }
       } else {
-        setError("Verification failed. Please try again.");
+        setError("Password reset failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -132,16 +158,21 @@ function LoginForm() {
           </h1>
         </Link>
         <p className="text-sm text-zinc-500 mt-1">
-          {loginMethod === "password" ? "Sign in to access your portal" : "Forgot password recovery & secure entry"}
+          {loginMethod === "password" ? "Sign in to access your portal" : "Forgot Password Code Reset"}
         </p>
       </div>
 
-
-
       {/* Success alert on registration */}
-      {registered === "true" && loginMethod === "password" && (
+      {registered === "true" && loginMethod === "password" && !successMessage && (
         <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-[#2A9D8F] font-medium">
           Account created successfully! Enter your password to log in.
+        </div>
+      )}
+
+      {/* Success alert after password reset */}
+      {successMessage && (
+        <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-[#2A9D8F] font-medium">
+          {successMessage}
         </div>
       )}
 
@@ -187,6 +218,7 @@ function LoginForm() {
                   setLoginMethod("otp");
                   setOtpStep(1);
                   setError(null);
+                  setSuccessMessage(null);
                 }}
                 className="text-xs text-[#E63946] font-semibold hover:underline"
               >
@@ -213,7 +245,7 @@ function LoginForm() {
         </form>
       )}
 
-      {/* Passwordless OTP Entry Form */}
+      {/* Code-based OTP Reset Password Form */}
       {loginMethod === "otp" && (
         <>
           {otpStep === 1 ? (
@@ -231,7 +263,7 @@ function LoginForm() {
                   className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900"
                 />
                 <p className="text-[11px] text-zinc-400 mt-1">
-                  Enter your email. We will send a 6-digit password reset code / link to your inbox.
+                  Enter your registered email address to receive a 6-digit security code.
                 </p>
               </div>
 
@@ -240,7 +272,7 @@ function LoginForm() {
                 disabled={loading}
                 className="w-full py-2.5 px-4 bg-[#E63946] hover:bg-[#d62837] text-white font-medium text-sm rounded-lg transition-colors shadow-xs disabled:opacity-50"
               >
-                {loading ? "Sending Code…" : "Send Reset Code / Link"}
+                {loading ? "Sending Code…" : "Send 6-Digit Code"}
               </button>
 
               <div className="text-center mt-3">
@@ -249,6 +281,7 @@ function LoginForm() {
                   onClick={() => {
                     setLoginMethod("password");
                     setError(null);
+                    setSuccessMessage(null);
                   }}
                   className="text-xs text-zinc-500 hover:text-zinc-800 transition-colors font-medium hover:underline"
                 >
@@ -257,10 +290,24 @@ function LoginForm() {
               </div>
             </form>
           ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
+            <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
-                  6-Digit Reset Code
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
+                  6-Digit Reset Code (OTP)
                 </label>
                 <input
                   type="text"
@@ -274,12 +321,42 @@ function LoginForm() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900"
+                />
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full py-2.5 px-4 bg-[#2A9D8F] hover:bg-emerald-700 text-white font-medium text-sm rounded-lg transition-colors shadow-xs disabled:opacity-50"
               >
-                {loading ? "Verifying…" : "Verify Code"}
+                {loading ? "Resetting Password…" : "Reset Password & Save"}
               </button>
 
               <div className="flex justify-between items-center text-xs mt-3">
@@ -288,11 +365,13 @@ function LoginForm() {
                   onClick={() => {
                     setOtpStep(1);
                     setOtpToken("");
+                    setNewPassword("");
+                    setConfirmPassword("");
                     setError(null);
                   }}
                   className="text-zinc-500 hover:text-zinc-800 transition-colors font-medium hover:underline"
                 >
-                  &larr; Change Email
+                  &larr; Resend Code
                 </button>
                 <button
                   type="button"
@@ -300,22 +379,13 @@ function LoginForm() {
                     setLoginMethod("password");
                     setOtpStep(1);
                     setOtpToken("");
+                    setNewPassword("");
+                    setConfirmPassword("");
                     setError(null);
                   }}
                   className="text-zinc-500 hover:text-zinc-800 transition-colors font-medium hover:underline"
                 >
                   Back to login
-                </button>
-              </div>
-
-              <div className="text-right text-xs mt-3">
-                <button
-                  type="button"
-                  onClick={handleSendOtp}
-                  disabled={loading}
-                  className="text-[#E63946] hover:underline font-semibold"
-                >
-                  Resend Code
                 </button>
               </div>
             </form>
@@ -346,3 +416,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
