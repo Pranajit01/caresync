@@ -141,16 +141,17 @@ export async function verifySignInOtp(email: string, token: string) {
 }
 
 /**
- * Send a 6-digit OTP code to the user's email for password reset.
- * Uses signInWithOtp — works on Supabase free tier without template changes.
- * shouldCreateUser: false prevents account creation via this route.
+ * Send a password reset magic link to the user's email.
+ * On click, Supabase redirects to /auth/callback which then sends to /login/reset-password.
  */
 export async function sendPasswordReset(email: string) {
-  const { data, error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: false,
-    },
+  const origin =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_APP_URL || "https://caresync-india.vercel.app";
+
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=/login/reset-password`,
   });
 
   if (error) {
@@ -159,6 +160,7 @@ export async function sendPasswordReset(email: string) {
 
   return data;
 }
+
 
 /**
  * Verify recovery OTP (type: 'recovery')

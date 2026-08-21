@@ -3,12 +3,11 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signInUser, sendPasswordReset, resetPasswordWithOtp } from "@/lib/auth";
+import { signInUser, sendPasswordReset } from "@/lib/auth";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackError = searchParams.get("error");
   const registered = searchParams.get("registered");
   const initialEmail = searchParams.get("email") || "";
   const initialRole = searchParams.get("role") || "";
@@ -16,21 +15,13 @@ function LoginForm() {
   // Common authentication state
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(
-    callbackError === "auth_callback_failed"
-      ? "Password reset token expired or invalid. Please request a new 6-digit code below."
-      : null
-  );
+  const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Passwordless OTP recovery/login states
-  const [loginMethod, setLoginMethod] = useState<"password" | "otp">("password");
-  const [otpStep, setOtpStep] = useState<1 | 2>(1); // 1: input email, 2: input 6-digit code + new password
-  const [otpToken, setOtpToken] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [otpSentMessage, setOtpSentMessage] = useState<string | null>(null);
+  // Forgot password view toggle
+  const [showForgot, setShowForgot] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
 
   // Handle Standard Password Login
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -75,73 +66,27 @@ function LoginForm() {
     }
   };
 
-  // Handle OTP request (Step 1)
-  const handleSendOtp = async (e: React.FormEvent) => {
+  // Handle Forgot Password — just send the reset link
+  const handleSendResetLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccessMessage(null);
     setLoading(true);
 
     try {
       await sendPasswordReset(email);
-      setOtpSentMessage(`A 6-digit password reset code has been sent to ${email}. Check your email inbox.`);
-      setOtpStep(2);
+      setLinkSent(true);
     } catch (err: unknown) {
       if (err instanceof Error) {
         const msg = err.message;
         if (msg.includes("User not found") || msg.includes("Signups not allowed")) {
-          setError("Email not registered. Please sign up for an account first.");
+          setError("This email is not registered. Please sign up first.");
         } else if (msg.toLowerCase().includes("fetch")) {
           setError("Unable to connect. Check your internet connection.");
         } else {
           setError(msg);
         }
       } else {
-        setError("Failed to send 6-digit code. Try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle Code-based Reset Password (Step 2)
-  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccessMessage(null);
-
-    if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters long.");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match. Please verify both password fields.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      await resetPasswordWithOtp(email, otpToken, newPassword);
-      setSuccessMessage("Password reset successfully! Please log in with your new credentials.");
-      setLoginMethod("password");
-      setPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setOtpToken("");
-      setOtpStep(1);
-      setOtpSentMessage(null);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        const msg = err.message;
-        if (msg.toLowerCase().includes("invalid") || msg.toLowerCase().includes("expired")) {
-          setError("Invalid or expired 6-digit reset code. Please check your code or request a new one.");
-        } else {
-          setError(msg);
-        }
-      } else {
-        setError("Password reset failed. Please try again.");
+        setError("Failed to send reset link. Try again.");
       }
     } finally {
       setLoading(false);
@@ -158,28 +103,21 @@ function LoginForm() {
           </h1>
         </Link>
         <p className="text-sm text-zinc-500 mt-1">
-          {loginMethod === "password" ? "Sign in to access your portal" : "Forgot Password Code Reset"}
+          {showForgot ? "Reset your password" : "Sign in to access your portal"}
         </p>
       </div>
 
       {/* Success alert on registration */}
-      {registered === "true" && loginMethod === "password" && !successMessage && (
+      {registered === "true" && !showForgot && !successMessage && (
         <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-[#2A9D8F] font-medium">
           Account created successfully! Enter your password to log in.
         </div>
       )}
 
-      {/* Success alert after password reset */}
+      {/* Success message after password reset */}
       {successMessage && (
         <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-[#2A9D8F] font-medium">
           {successMessage}
-        </div>
-      )}
-
-      {/* OTP code sent success alert */}
-      {loginMethod === "otp" && otpSentMessage && (
-        <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-[#2A9D8F] font-medium">
-          {otpSentMessage}
         </div>
       )}
 
@@ -190,8 +128,8 @@ function LoginForm() {
         </div>
       )}
 
-      {/* Standard Password Login Form */}
-      {loginMethod === "password" && (
+      {/* ── STANDARD LOGIN FORM ── */}
+      {!showForgot && (
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
@@ -215,8 +153,8 @@ function LoginForm() {
               <button
                 type="button"
                 onClick={() => {
-                  setLoginMethod("otp");
-                  setOtpStep(1);
+                  setShowForgot(true);
+                  setLinkSent(false);
                   setError(null);
                   setSuccessMessage(null);
                 }}
@@ -245,14 +183,15 @@ function LoginForm() {
         </form>
       )}
 
-      {/* Code-based OTP Reset Password Form */}
-      {loginMethod === "otp" && (
+      {/* ── FORGOT PASSWORD SECTION ── */}
+      {showForgot && (
         <>
-          {otpStep === 1 ? (
-            <form onSubmit={handleSendOtp} className="space-y-4">
+          {/* State A: Email form — before sending */}
+          {!linkSent && (
+            <form onSubmit={handleSendResetLink} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
-                  Email Address
+                  Your Registered Email
                 </label>
                 <input
                   type="email"
@@ -263,7 +202,7 @@ function LoginForm() {
                   className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900"
                 />
                 <p className="text-[11px] text-zinc-400 mt-1">
-                  Enter your registered email address to receive a 6-digit security code.
+                  We will send a secure password reset link to this email address.
                 </p>
               </div>
 
@@ -272,123 +211,82 @@ function LoginForm() {
                 disabled={loading}
                 className="w-full py-2.5 px-4 bg-[#E63946] hover:bg-[#d62837] text-white font-medium text-sm rounded-lg transition-colors shadow-xs disabled:opacity-50"
               >
-                {loading ? "Sending Code…" : "Send 6-Digit Code"}
+                {loading ? "Sending…" : "Send Reset Link"}
               </button>
 
               <div className="text-center mt-3">
                 <button
                   type="button"
                   onClick={() => {
-                    setLoginMethod("password");
+                    setShowForgot(false);
                     setError(null);
-                    setSuccessMessage(null);
                   }}
-                  className="text-xs text-zinc-500 hover:text-zinc-800 transition-colors font-medium hover:underline"
+                  className="text-xs text-zinc-500 hover:text-zinc-800 font-medium hover:underline"
                 >
-                  &larr; Back to password login
+                  &larr; Back to login
                 </button>
               </div>
             </form>
-          ) : (
-            <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900"
-                />
+          )}
+
+          {/* State B: Link sent — show clear instructions */}
+          {linkSent && (
+            <div className="space-y-4">
+              {/* Big confirmation icon */}
+              <div className="flex justify-center">
+                <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-2xl">
+                  📧
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
-                  6-Digit Reset Code (OTP)
-                </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={6}
-                  pattern="\d{6}"
-                  value={otpToken}
-                  onChange={(e) => setOtpToken(e.target.value)}
-                  placeholder="123456"
-                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-center tracking-widest text-lg font-bold focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-zinc-900"
-                />
+              <div className="text-center space-y-2">
+                <h2 className="text-base font-bold text-zinc-800">Check your inbox!</h2>
+                <p className="text-sm text-zinc-600">
+                  A confirmation email has been sent to{" "}
+                  <span className="font-semibold text-zinc-900">{email}</span>.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900"
-                />
+              {/* Instruction box */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                <p className="text-sm font-semibold text-blue-800">What to do next:</p>
+                <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                  <li>Open your email inbox</li>
+                  <li>Find the email from <strong>Supabase Auth</strong></li>
+                  <li>Click the <strong>&ldquo;Reset password&rdquo;</strong> link inside</li>
+                  <li>You will be taken directly to the website to set your new password</li>
+                </ol>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E63946] focus:border-transparent text-sm text-zinc-900"
-                />
-              </div>
+              <p className="text-xs text-zinc-400 text-center">
+                The link expires in 1 hour. Didn&apos;t receive it? Check your spam folder.
+              </p>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2.5 px-4 bg-[#2A9D8F] hover:bg-emerald-700 text-white font-medium text-sm rounded-lg transition-colors shadow-xs disabled:opacity-50"
-              >
-                {loading ? "Resetting Password…" : "Reset Password & Save"}
-              </button>
-
-              <div className="flex justify-between items-center text-xs mt-3">
+              {/* Resend + back buttons */}
+              <div className="flex flex-col gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    setOtpStep(1);
-                    setOtpToken("");
-                    setNewPassword("");
-                    setConfirmPassword("");
+                    setLinkSent(false);
                     setError(null);
                   }}
-                  className="text-zinc-500 hover:text-zinc-800 transition-colors font-medium hover:underline"
+                  className="w-full py-2 px-4 border border-zinc-300 text-zinc-700 text-sm font-medium rounded-lg hover:bg-zinc-50 transition-colors"
                 >
-                  &larr; Resend Code
+                  Resend link to a different email
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    setLoginMethod("password");
-                    setOtpStep(1);
-                    setOtpToken("");
-                    setNewPassword("");
-                    setConfirmPassword("");
+                    setShowForgot(false);
+                    setLinkSent(false);
                     setError(null);
                   }}
-                  className="text-zinc-500 hover:text-zinc-800 transition-colors font-medium hover:underline"
+                  className="w-full py-2 px-4 text-zinc-500 text-sm font-medium hover:text-zinc-800 hover:underline"
                 >
-                  Back to login
+                  &larr; Back to login
                 </button>
               </div>
-            </form>
+            </div>
           )}
         </>
       )}
@@ -396,10 +294,7 @@ function LoginForm() {
       {/* Footer link */}
       <div className="mt-6 text-center text-sm text-zinc-500">
         Don&apos;t have an account?{" "}
-        <Link
-          href="/signup"
-          className="text-[#E63946] font-medium hover:underline"
-        >
+        <Link href="/signup" className="text-[#E63946] font-medium hover:underline">
           Sign Up
         </Link>
       </div>
@@ -416,4 +311,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
