@@ -150,7 +150,7 @@ export async function sendPasswordReset(email: string) {
       : process.env.NEXT_PUBLIC_APP_URL || "https://caresync-india.vercel.app";
 
   const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/login/reset-password`,
+    redirectTo: `${origin}/login/reset-password`,
   });
 
   if (error) {
