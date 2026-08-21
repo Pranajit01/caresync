@@ -142,35 +142,7 @@ function LoginForm() {
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-zinc-100 mb-6">
-        <button
-          onClick={() => {
-            setLoginMethod("password");
-            setError(null);
-          }}
-          className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all ${
-            loginMethod === "password"
-              ? "border-[#E63946] text-[#E63946]"
-              : "border-transparent text-zinc-400 hover:text-zinc-600"
-          }`}
-        >
-          Password Entry
-        </button>
-        <button
-          onClick={() => {
-            setLoginMethod("otp");
-            setError(null);
-          }}
-          className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all ${
-            loginMethod === "otp"
-              ? "border-[#E63946] text-[#E63946]"
-              : "border-transparent text-zinc-400 hover:text-zinc-600"
-          }`}
-        >
-          Email Passcode
-        </button>
-      </div>
+
 
       {/* Success alert on registration */}
       {registered === "true" && loginMethod === "password" && (
@@ -276,6 +248,19 @@ function LoginForm() {
               >
                 {loading ? "Sending Code…" : "Send One-Time Code"}
               </button>
+
+              <div className="text-center mt-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginMethod("password");
+                    setError(null);
+                  }}
+                  className="text-xs text-zinc-500 hover:text-zinc-800 transition-colors font-medium hover:underline"
+                >
+                  &larr; Back to password login
+                </button>
+              </div>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
@@ -311,10 +296,25 @@ function LoginForm() {
                     setOtpToken("");
                     setError(null);
                   }}
-                  className="text-zinc-500 hover:text-zinc-800 transition-colors font-medium"
+                  className="text-zinc-500 hover:text-zinc-800 transition-colors font-medium hover:underline"
                 >
                   &larr; Change Email
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginMethod("password");
+                    setOtpStep(1);
+                    setOtpToken("");
+                    setError(null);
+                  }}
+                  className="text-zinc-500 hover:text-zinc-800 transition-colors font-medium hover:underline"
+                >
+                  Back to login
+                </button>
+              </div>
+
+              <div className="text-right text-xs mt-3">
                 <button
                   type="button"
                   onClick={handleSendOtp}
