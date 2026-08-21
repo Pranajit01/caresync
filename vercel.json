@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/auto-skip",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
